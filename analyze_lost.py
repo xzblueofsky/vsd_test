@@ -17,7 +17,7 @@ IMAGE_HEIGHT = 1080
 THRESHOLD = 0.1
 TOPN = 1
 #SECONDS = 50
-ALARM_THRESHOLD = 0.1
+ALARM_THRESHOLD = 0.92
  
 logger = logging.getLogger("MyLogger")
 os.system("mkdir -p ./log")
@@ -45,7 +45,7 @@ def get_capture_rate(vname):
     total_list = []
     glist = result_to_list("./ground_truth/%s_label.txt" % vname)
     #tlist = result_to_list("./test_result/%s.txt" % vname)
-    tlist = result_to_list("/home/dell/face/VSD/latest/result.txt")
+    tlist = result_to_list("/home/dell/face/VSD/latest/result.txt.zy")
     ioucnt = 0
     for gitem in glist:
        gframeid = gitem[0]
@@ -171,7 +171,7 @@ def get_recognition_rate(mode, vname, time = 50): #mode:0=2s  mode:1=last
 
 def calculate_presition(t_frameid, gid, vname): #输入为真实frameid，人id 
     #flist = result_to_list("./test_result/%s.txt" % vname)#读取vsd结果为list文件
-    flist = result_to_list("/home/dell/face/VSD/latest/result.txt")
+    flist = result_to_list("/home/dell/face/VSD/latest/result.txt.zy")
     glist = result_to_list("./ground_truth/%s_label.txt" % vname) #读取ground truth结果为list文件
     gname = name_in_blacklist(gid)
     #print gname
@@ -269,7 +269,7 @@ def calculate_error_alarm(vname):
     total_list = []
     glist = result_to_list("./ground_truth/%s_label.txt" % vname)
     #tlist = result_to_list("./test_result/%s.txt" % vname)
-    tlist = result_to_list("/home/dell/face/VSD/latest/result.txt")
+    tlist = result_to_list("/home/dell/face/VSD/latest/result.txt.zy")
     erroralarm = 0
     totalalarm = len(tlist)
     
@@ -315,21 +315,20 @@ def calculate_error_person_alarm(vname):
     total_list = []
     glist = result_to_list("./ground_truth/%s_label.txt" % vname)
     #tlist = result_to_list("./test_result/%s.txt" % vname)
-    tlist = result_to_list("/home/dell/face/VSD/latest/result.txt")
+    tlist = result_to_list("/home/dell/face/VSD/latest/result.txt.zy")
     erroralarm = 0
     totalalarm = len(tlist)
     person_alarm = 0
+    person_dict = {}
+    person_rate = 0
 
     for gitem in glist: #统计每一个gid
        gframeid = gitem[0]
        gid = gitem[1]
        groi = gitem[2:6]
-       if gid not in total_list: #新出现的id，放入totallist
-          total_list.append(gid)
-       if gid not in done_list: #统计过的
-         person_total = 0
-         person_error = 0
-         for titem in tlist: #循环tlist与gid对比
+       if gid not in person_dict:
+          person_dict[gid] = [0,0]
+       for titem in tlist: #循环tlist与gid对比
            #if flag == 1 :
            #   break
            if int(gitem[0]) == int(titem[0]):#帧数一样的时候
@@ -341,36 +340,58 @@ def calculate_error_person_alarm(vname):
                 #print person_total
                 try:
                   if float(titem[8]) > ALARM_THRESHOLD:
-                     person_total += 1
+                     #person_total += 1
+                     person_dict[gid][0] +=1 
                      gname = name_in_blacklist(gid)
                      tname = titem[7]
                      #print tname, gname
                      if tname != gname:
-                        
-                        print tname
-                        print gname
-                        person_error += 1
+                        #print tname
+                        #print gname
+                        person_dict[gid][1] +=1 
+                        #person_error += 1
                         #print person_error
                         #print person_total
                 except:
                   continue 
-         if person_total == 0:
-            continue
-         else:
+         #if person_dict[gid][0] == 0:
+         #   continue
+         #else:
             #print "person_total:"
             #print person_error, person_total, person_alarm
-            person_alarm += person_error*1.0/person_total  
-            print "person_error = {}, person_total = {}".format(person_error, person_total)
+            #person_alarm += person_error*1.0/person_total  
+            #person_alarm += person_error*1.0/person_total  
+            #print "person_error = {}, person_total = {}".format(person_error, person_total)
             #print person_error, person_total
-    print ""
-    print "person_alarm:"
-    print person_alarm
-    error_person_rate = (person_alarm*1.0/len(total_list))*100
+    #print person_alarm
+    
+    #error_person_rate = (person_alarm*1.0/len(total_list))*100
+    print person_dict
+    alarm_rate_total = 0
+    alarm_rate_times = 0
+    lost_num = 0
+    for key,value in person_dict.items():
+       if value[0] == 0:
+          person_rate += 0
+       else:
+          person_rate += value[1]*1.0/value[0]
+       alarm_rate_total += value[0]
+       alarm_rate_times += value[1]
+       if value[0] == value[1]:
+          lost_num += 1
+    
+    error_person_rate = person_rate*1.0/len(person_dict)*100
+    error_rate =  alarm_rate_times*1.0/alarm_rate_total*100
+    lost_rate = lost_num*1.0/len(person_dict)*100
+    print "error_rate_new:"
+    print error_rate
+    print "lost_rate:"
+    print lost_rate
     #print "erroralarm" + str(erroralarm)
     #print "totalalarm" + str(totalalarm)
     #print  "error_rate" + str(error_rate)
     #print sorted(success_list)
-    return error_person_rate
+    return error_person_rate, error_rate, lost_rate
 
 
 def calculate_lost_alarm(vname):
@@ -378,7 +399,7 @@ def calculate_lost_alarm(vname):
     total_list = []
     glist = result_to_list("./ground_truth/%s_label.txt" % vname)
     #tlist = result_to_list("./test_result/%s.txt" % vname)
-    tlist = result_to_list("/home/dell/face/VSD/latest/result.txt")
+    tlist = result_to_list("/home/dell/face/VSD/latest/result.txt.zy")
     correct = 0
     totalalarm = len(tlist)
 
@@ -501,7 +522,7 @@ if __name__ == '__main__':
   avg_error_person_list = []
   avg_lost_list = []
   #for i in (0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9):
-  with open ("totalresult.txt", "w") as t:
+  with open ("totalresult.txt.zy", "w") as t:
    #for i in (0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9):
    for i in [0.6]:
     #ALARM_THRESHOLD = i
@@ -516,9 +537,9 @@ if __name__ == '__main__':
      #rrate = float(get_recognition_rate(0, vname, 50))*100 #mode=0 : 2s, mode = 1:last
      #rrate2 = float(get_recognition_rate(0, vname, 125))*100 #mode=0 : 5s, mode = 1:last
      lrate = float(get_recognition_rate(1, vname))*100
-     error_rate = calculate_error_alarm(vname)
-     error_person_rate = calculate_error_person_alarm(vname)
-     lost_rate = calculate_lost_alarm(vname)
+     #error_rate = calculate_error_alarm(vname)
+     error_person_rate, error_rate, lost_rate = calculate_error_person_alarm(vname)
+     #lost_rate = calculate_lost_alarm(vname)
      print "="*100
      print "video %s.mp4's capture rate: %.1f%% " % (vname, crate)
      print "video %s.mp4's iou avg: %f " % (vname, iourate)
