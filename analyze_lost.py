@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 #from concurrent import futures
+import sys
 import time
 #import grpc
 #import witness_pb2
@@ -546,9 +547,103 @@ def CalRatio(pos1, pos2):
     return ratio
 
 
+def FileToList(path):
+    records = []
+    with open(path, 'r') as f:
+        lines = f.readlines()
+        for line in lines:
+            line = line.strip()
+            record = line.split(',')
+            records.append(record)
+    return records 
 
+def GetIOU(r1, r2):
+    x1 = float(r1[0])
+    y1 = float(r1[1])
+    w1 = float(r1[2])
+    h1 = float(r1[3])
+
+    x2 = float(r2[0])
+    y2 = float(r2[1])
+    w2 = float(r2[2])
+    h2 = float(r2[3])
+    
+    left = max(x1, x2)
+    bottom = max(y1, y2)
+    top = min(y1+h1, y2+h2)
+    right = min(x1+w1, x2+w2)
+    
+    inter_w = right-left
+    inter_h = top-bottom
+    if inter_w<=0 or inter_h<=0:
+        inter_area=0
+    else:
+        inter_area = (right-left)*(top-bottom)
+    iou=0
+    if inter_area>0:
+        iou = float(inter_area)/float(w1*h1 + w2*h2 - inter_area)
+    #print 'iou={}\n'.format(iou)
+    return iou
+    
+
+def GetCaptureRate(predict_records, ground_truth_records, iou_thresh):
+    """ 计算抓拍率 """
+    success_list = []
+    total_list = []
+    for gitem in ground_truth_records:
+       gframeid = gitem[0] #frame_id
+       gid = gitem[1] #people_id
+       groi = gitem[2:6] #bounding box
+       if gid not in total_list:
+          total_list.append(gid)
+       if gid in success_list: #already captured, skip
+          continue
+       flag = 0
+       for titem in predict_records:
+           if flag == 1 :
+              break
+           if int(gitem[0]) == int(titem[0]): #在同一帧中
+              tframeid = titem[0]
+              troi = titem[2:6]
+              iou = GetIOU(groi, troi)
+              if iou > THRESHOLD: # IOU 超过阈值
+                     logger.info("@@@@@@@@@@@@@captured@@@@@@@@@@@@@@")
+                     logger.info("iou: %s" % iou)
+                     logger.info("gframe_id: %s" % gframeid)
+                     logger.info("gid: %s" % gid)
+                     logger.info("groi: %s" % groi)
+                     logger.info("tframe_id: %s" % tframeid )
+                   #  logger.info("tid: %s" % tid)
+                     logger.info("troi: %s" % troi)
+                     success_list.append(gid)
+                     flag = 1
+    #print sorted(success_list)
+    logger.info("success list: %s" % success_list )
+    logger.info("total list: %s" % total_list )
+
+    capture_rate = len(success_list)*1.0/len(total_list)
+    #print "capture_rate: " + str(capture_rate)
+    logger.info("capture rate: %.1f%%" % capture_rate )
+    return capture_rate
 
 if __name__ == '__main__':
+  print 'hello world'
+  if len(sys.argv) != 5:
+    print ('Usage: ./analyze_lost.py <predict_result_path> <ground_truth_path> <IOU threshold> <alarm similarity threshold>')
+    exit(1)
+  predict_result_path = sys.argv[1]
+  groundtruth_path = sys.argv[2]
+  iou_thresh = float(sys.argv[3])
+  alarm_similarity_thresh = float(sys.argv[4])
+  
+  predict_records = FileToList(predict_result_path)
+  ground_truth_records = FileToList(groundtruth_path)
+  
+  ## 1. 抓拍率
+  capture_rate = GetCaptureRate(predict_records, ground_truth_records, iou_thresh)
+  print ('capture_rate = {}\n'.format(capture_rate)) 
+
+  '''  
   #video_list = ["day_1_1","day_1_2","day_1_3","day_1_4","night_1_1","night_1_2","night_1_3","night_1_4"]
   #video_list = ["day_1_1","day_1_2","day_1_3","day_1_4","day_2_1","day_2_2","day_2_3","day_2_4","day_3_1","day_3_2","day_3_3","day_3_4","day_4_1","day_4_2","day_4_3","day_4_4","night_1_1","night_1_2","night_1_3","night_1_4","night_2_1","night_2_2","night_2_3","night_2_4","night_3_1","night_3_2","night_3_3","night_3_4","night_4_1","night_4_2","night_4_3","night_4_4"]
   #video_list = ["day_1_1", "day_1_2","day_1_3","day_1_4"]
@@ -614,3 +709,4 @@ if __name__ == '__main__':
   #b = [672.0,302.4,172.8,270.0]
   #ratio =   CalRatio(a,b)
   #print ratio
+    '''
