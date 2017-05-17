@@ -15,9 +15,9 @@ _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 IMAGE_WIDTH = 1920
 IMAGE_HEIGHT = 1080
 THRESHOLD = 0.1
-TOPN = 1
+TOPN = 1 #0 means use ALARM_THRESHOLD
 #SECONDS = 50
-ALARM_THRESHOLD = 0.92
+ALARM_THRESHOLD = 0.6
  
 logger = logging.getLogger("MyLogger")
 os.system("mkdir -p ./log")
@@ -45,7 +45,7 @@ def get_capture_rate(vname):
     total_list = []
     glist = result_to_list("./ground_truth/%s_label.txt" % vname)
     #tlist = result_to_list("./test_result/%s.txt" % vname)
-    tlist = result_to_list("/home/dell/face/VSD/latest/result.txt.zy")
+    tlist = result_to_list("/home/dell/face/VSD/latest/result.txt")
     ioucnt = 0
     for gitem in glist:
        gframeid = gitem[0]
@@ -171,12 +171,12 @@ def get_recognition_rate(mode, vname, time = 50): #mode:0=2s  mode:1=last
 
 def calculate_presition(t_frameid, gid, vname): #输入为真实frameid，人id 
     #flist = result_to_list("./test_result/%s.txt" % vname)#读取vsd结果为list文件
-    flist = result_to_list("/home/dell/face/VSD/latest/result.txt.zy")
+    flist = result_to_list("/home/dell/face/VSD/latest/result.txt")
     glist = result_to_list("./ground_truth/%s_label.txt" % vname) #读取ground truth结果为list文件
     gname = name_in_blacklist(gid)
     #print gname
     logger.info("name for search: %s " % gname)
-    b_num = num_in_blacklist(gname) #此人在黑名单库的照片个数
+    acture_num = num_in_blacklist(gname) #此人在黑名单库的照片个数
     tmplist = []
     for fitem in flist: #循环vsd的结果list文件
        if int(fitem[0]) <= t_frameid:  
@@ -197,6 +197,8 @@ def calculate_presition(t_frameid, gid, vname): #输入为真实frameid，人id
           logger.info("troi: %s " % fitem[2:6])
           #print "froi"
           #print froi
+	  m_cnt = 0
+	  k_cnt = 0
           for gitem in glist:
            if int(gitem[0]) == int(num) and str(gitem[1]) == str(gid): #找回groudtruth文件中这一帧且id是这个人的信息，拿到cutboard 
              logger.info("gframeid: %d " % int(gitem[0]))
@@ -214,7 +216,39 @@ def calculate_presition(t_frameid, gid, vname): #输入为真实frameid，人id
                  logger.info("iou > %s " % THRESHOLD)
                  #print "IOU:  " + str(iou)
                  #print "~~~~~~~~~~~~"
-                 topnamelist = []
+		 if TOPN == 0:
+		     print ""
+		     print "#"*10 + gname + "#"*10
+		     count = 0
+		     for i in range(1,(len(fitem)-6)/3):
+			 print "fitem:%s"%str(fitem[i*3+5])
+		         if float(fitem[i*3+5]) > ALARM_THRESHOLD:
+			     #print fitem[i*3+5]
+			     count += 1
+			     #print "count:%s"%str(count)
+			     fname = fitem[i*3+4]
+			     print "gname:%s,fname:%s"%(gname,fname)
+			     if gname == fname:
+				 #print "gname:%s,fname:%s"%(gname,fname)
+				 logger.info("gname:%s,fname:%s"%(gname,fname))
+		                 k_cnt += 1
+				 #print "k_cnt:%s"%str(k_cnt)
+				 #print "i:%s"%str(i)
+		                 rate = k_cnt*1.0/i
+		             else:
+			         rate = 0
+		             m_cnt += rate
+		     #acture_num = num_in_blacklist(gname) #此人在黑名单中的总数
+		     if min(count, acture_num) == 0:
+			 map_rate = 0
+		     else:
+		         map_rate = m_cnt*1.0/min(count, acture_num)
+		     print "image num:%s"%str(min(count, acture_num))
+		     print "map_rate:%s"%str(map_rate)
+		     logger.info("gname:%s,map_rate:%s"%(gname,str(map_rate)))
+		     return map_rate
+                 
+		 topnamelist = []
                  for j in range(1,TOPN+1): #把TOPN中命中的id存为list
                    try:
                     topnamelist.append(fitem[j*3+4])
@@ -223,13 +257,13 @@ def calculate_presition(t_frameid, gid, vname): #输入为真实frameid，人id
                  logger.info("top name list: %s" % str(topnamelist).decode('string_escape'))
                  #print "frameid: " + str(fitem[0])
                  #print "froi: " + str(froi)
-                 #print "topidlist: " + str(topidlist)
+                 #print "topidlist: " + str(topnamelist).decode('string_escape')
                  #print "iou: " + str(iou)
                  id_cnt = 0
                  for i in topnamelist:
                     if i == gname: #当toplist中有真实id的时候 计数器+1
                         id_cnt += 1
-                 acture_num = num_in_blacklist(gname) #此人在黑名单中的总数
+                 #acture_num = num_in_blacklist(gname) #此人在黑名单中的总数
                  if acture_num == 0:
                     rate = 0
                  else:
@@ -241,6 +275,7 @@ def calculate_presition(t_frameid, gid, vname): #输入为真实frameid，人id
                  map_cnt = 0
                  for j in range(0,TOPN):
                     m_cnt += 1
+		    print "gname:%s,fname:%s"%(gname,topnamelist[j])
                     if topnamelist[j] == gname:
                        k_cnt += 1
                        #print k_cnt
@@ -253,7 +288,7 @@ def calculate_presition(t_frameid, gid, vname): #输入为真实frameid，人id
 		 else:
                     map_rate = map_cnt*1.0/min(TOPN, acture_num)
                  #print "rate: "+str(rate)
-                 #print "map_rate: " + str(map_rate)
+                 print "map_rate: " + str(map_rate)
                  logger.info("map_rate: %s" % map_rate)
                  
                  #return (rate, map_rate) 
@@ -269,7 +304,7 @@ def calculate_error_alarm(vname):
     total_list = []
     glist = result_to_list("./ground_truth/%s_label.txt" % vname)
     #tlist = result_to_list("./test_result/%s.txt" % vname)
-    tlist = result_to_list("/home/dell/face/VSD/latest/result.txt.zy")
+    tlist = result_to_list("/home/dell/face/VSD/latest/result.txt")
     erroralarm = 0
     totalalarm = len(tlist)
     
@@ -315,7 +350,7 @@ def calculate_error_person_alarm(vname):
     total_list = []
     glist = result_to_list("./ground_truth/%s_label.txt" % vname)
     #tlist = result_to_list("./test_result/%s.txt" % vname)
-    tlist = result_to_list("/home/dell/face/VSD/latest/result.txt.zy")
+    tlist = result_to_list("/home/dell/face/VSD/latest/result.txt")
     erroralarm = 0
     totalalarm = len(tlist)
     person_alarm = 0
@@ -381,7 +416,10 @@ def calculate_error_person_alarm(vname):
           lost_num += 1
     
     error_person_rate = person_rate*1.0/len(person_dict)*100
-    error_rate =  alarm_rate_times*1.0/alarm_rate_total*100
+    if alarm_rate_total == 0:
+	error_rate = 0
+    else:
+        error_rate = alarm_rate_times*1.0/alarm_rate_total*100
     lost_rate = lost_num*1.0/len(person_dict)*100
     print "error_rate_new:"
     print error_rate
@@ -399,7 +437,7 @@ def calculate_lost_alarm(vname):
     total_list = []
     glist = result_to_list("./ground_truth/%s_label.txt" % vname)
     #tlist = result_to_list("./test_result/%s.txt" % vname)
-    tlist = result_to_list("/home/dell/face/VSD/latest/result.txt.zy")
+    tlist = result_to_list("/home/dell/face/VSD/latest/result.txt")
     correct = 0
     totalalarm = len(tlist)
 
@@ -516,13 +554,13 @@ if __name__ == '__main__':
   #video_list = ["day_1_1", "day_1_2","day_1_3","day_1_4"]
   #video_list = ["day_1_1", "day_1_1","day_1_1","day_1_1","day_1_1", "day_1_1","day_1_1","day_1_1"]
   #video_list = ["night_4_4"]
-  video_list = ["day_out"]
+  video_list = ["hg_12"]
   #ALARM_THRESHOLD = 0.5
   avg_error_list = []
   avg_error_person_list = []
   avg_lost_list = []
   #for i in (0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9):
-  with open ("totalresult.txt.zy", "w") as t:
+  with open ("totalresult.txt", "w") as t:
    #for i in (0.5,0.55,0.6,0.65,0.7,0.75,0.8,0.85,0.9):
    for i in [0.6]:
     #ALARM_THRESHOLD = i
