@@ -167,8 +167,6 @@ def get_recognition_rate(mode, vname, time = 50): #mode:0=2s  mode:1=last
        #print "total_num: " + str(len(gid_dict))
        #print "total_recognition: " + str(total_recognition)
        return total_recognition
-     
-
 
 def calculate_presition(t_frameid, gid, vname): #输入为真实frameid，人id 
     #flist = result_to_list("./test_result/%s.txt" % vname)#读取vsd结果为list文件
@@ -296,9 +294,6 @@ def calculate_presition(t_frameid, gid, vname): #输入为真实frameid，人id
                  return map_rate 
        #else:
     return 0
- 
-
-         
 
 def calculate_error_alarm(vname):
     done_list = []
@@ -558,6 +553,7 @@ def FileToList(path):
     return records 
 
 def GetIOU(r1, r2):
+    """计算IOU"""
     x1 = float(r1[0])
     y1 = float(r1[1])
     w1 = float(r1[2])
@@ -626,30 +622,156 @@ def GetCaptureRate(predict_records, ground_truth_records, iou_thresh):
     logger.info("capture rate: %.1f%%" % capture_rate )
     return capture_rate
 
+def GetRecall(predict_records_dict, ground_truth_records_dict, iou_thresh):
+    """计算Recall
+    Recall = M/N 
+
+    N: 所有出现在groundtruth中name不同的人的总数
+    M: 满足以下条件的item总数
+    1. Query::frame_id == GroundTruth::frame_id
+    2. Query::ROI & GroundTruth::ROI > iou_thresh
+    3. Query::recog_name == GroundTruth::name
+    4. 同样name的只计入一次
+    """
+    unique_ground_truth_names = set()
+    for (key, value) in ground_truth_records_dict.items():
+        unique_ground_truth_names.add(value[1])
+
+    M = len(unique_ground_truth_names)
+    if M==0:
+        print ('no name in grundtruth, check groundtruth and id_name_map')
+    
+    N = 0
+    hit_names = set()
+    for (pred_key, pred_value) in predict_records_dict.items():
+        pred_frame_id = pred_key[0]
+        pred_roi = pred_key[1:5]
+        pred_name = pred_value[2]
+        if pred_name in hit_names:
+            continue
+        for (ground_truth_key, ground_truth_value) in ground_truth_records_dict.items():
+            ground_truth_frame_id = ground_truth_key[0]
+            if pred_frame_id == ground_truth_frame_id: #条件1
+                ground_truth_roi = ground_truth_key[1:5]
+                iou = GetIOU(pred_roi, ground_truth_roi)
+                if iou>iou_thresh: #条件2
+                    ground_truth_name = ground_truth_value[1]
+                    #print 'ground_truth_name = {}, pred_name={}'.format(ground_truth_name, pred_name)
+                    if pred_name == ground_truth_name: #条件3
+                        hit_names.add(pred_name) # 条件4
+
+    N = len(hit_names)
+    print hit_names
+    print N
+    recall = float(N)/float(M)
+    return recall 
+
+def GetPredictRecordDict(predict_records):
+    """
+    将predict_records转换为dict格式
+    predict_record: <frame_id> <tracking_id> <x> <y> <width> <height> [<recog_id> <recog_name> <similarity_score>]
+    predict_recors_dict:
+    key: (<frame_id>, <x>, <y>, <width>, <height>)
+    value: (<tracking_id>, <recog_black_list_id>, <recog_name>, <similarity_score>)
+ 
+    """    
+    predict_records_dict = {}
+    for record in predict_records:
+        if len(record) < 8: #抓拍，没有识别结果
+            #print record
+            continue 
+        frame_id = int(record[0])
+        tracking_id = int(record[1])
+        x = float(record[2])
+        y = float(record[3])
+        width = float(record[4])
+        height = float(record[5])
+        recog_id = record[6]
+        recog_name = record[7]
+        similarity_score = float(record[8])
+
+        key = (frame_id, x, y, width, height)
+        value = (tracking_id, recog_id, recog_name, similarity_score)
+
+        predict_records_dict[key] = value
+
+    return predict_records_dict
+
+def GetIdNameMap(id_name_map_path):
+    id_name_map = {}
+    with open(id_name_map_path) as f:
+        lines = f.readlines()
+        for line in lines:
+            elems = line.split()
+            black_list_id = elems[0]
+            name = elems[1]
+            URL = elems[2]
+            id_name_map[black_list_id] = (name, URL)
+    return id_name_map
+
+def GetGroundTruthRecordDict(groundtruth_records, id_name_map):
+    """
+    将ground_truth_records和id_name_map_records转换为dict格式
+    ground_truth_record: <frame_id> <black_list_id> <x> <y> <width> <height>
+    id_map_record: <black_list_id> <name> <URL> 
+
+    groundtruth_records_dict:
+    key: (<frame_id>, <x>, <y>, <width>, <height>)
+    value: (<black_list_id>, <name>, <URL>)
+ 
+    """    
+
+    ground_truth_records_dict = {}
+    for record in ground_truth_records:
+        frame_id = int(record[0])
+        black_list_id = record[1]
+        x = float(record[2])
+        y = float(record[3])
+        width = float(record[4])
+        height = float(record[5])
+
+        key = (frame_id, x, y, width, height)
+        value = (black_list_id, id_name_map[black_list_id][0], id_name_map[black_list_id][1])
+
+        ground_truth_records_dict[key] = value
+
+    return ground_truth_records_dict
+
 if __name__ == '__main__':
-  print 'hello world'
-  if len(sys.argv) != 5:
-    print ('Usage: ./analyze_lost.py <predict_result_path> <ground_truth_path> <IOU threshold> <alarm similarity threshold>')
+  if len(sys.argv) != 6:
+    print ('Usage: ./analyze_lost.py <predict_result_path> <ground_truth_path> <id_name_map_path> <IOU threshold> <alarm similarity threshold>')
     exit(1)
   predict_result_path = sys.argv[1]
   groundtruth_path = sys.argv[2]
-  iou_thresh = float(sys.argv[3])
-  alarm_similarity_thresh = float(sys.argv[4])
+  id_name_map_path = sys.argv[3]
+  iou_thresh = float(sys.argv[4])
+  alarm_similarity_thresh = float(sys.argv[5])
   
   predict_records = FileToList(predict_result_path)
   ground_truth_records = FileToList(groundtruth_path)
+  id_name_map = GetIdNameMap(id_name_map_path)
   
   ## 1. 抓拍率
   capture_rate = GetCaptureRate(predict_records, ground_truth_records, iou_thresh)
   print ('capture_rate = {}\n'.format(capture_rate)) 
 
-  '''  
+  ## 2. Recall
+  predict_records_dict = GetPredictRecordDict(predict_records)
+  #print predict_records_dict
+  ground_truth_records_dict = GetGroundTruthRecordDict(ground_truth_records, id_name_map)
+  #print ground_truth_records_dict
+  recall = GetRecall(predict_records_dict, ground_truth_records_dict, iou_thresh)
+  print ('recall = {}\n'.format(recall))
+
+
+  ''' 
   #video_list = ["day_1_1","day_1_2","day_1_3","day_1_4","night_1_1","night_1_2","night_1_3","night_1_4"]
   #video_list = ["day_1_1","day_1_2","day_1_3","day_1_4","day_2_1","day_2_2","day_2_3","day_2_4","day_3_1","day_3_2","day_3_3","day_3_4","day_4_1","day_4_2","day_4_3","day_4_4","night_1_1","night_1_2","night_1_3","night_1_4","night_2_1","night_2_2","night_2_3","night_2_4","night_3_1","night_3_2","night_3_3","night_3_4","night_4_1","night_4_2","night_4_3","night_4_4"]
   #video_list = ["day_1_1", "day_1_2","day_1_3","day_1_4"]
   #video_list = ["day_1_1", "day_1_1","day_1_1","day_1_1","day_1_1", "day_1_1","day_1_1","day_1_1"]
   #video_list = ["night_4_4"]
-  video_list = ["hg_12"]
+  #video_list = ["hg_12"]
+  video_list = ["day_out"]
   #ALARM_THRESHOLD = 0.5
   avg_error_list = []
   avg_error_person_list = []
@@ -709,4 +831,4 @@ if __name__ == '__main__':
   #b = [672.0,302.4,172.8,270.0]
   #ratio =   CalRatio(a,b)
   #print ratio
-    '''
+  '''
