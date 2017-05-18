@@ -622,6 +622,61 @@ def GetCaptureRate(predict_records, ground_truth_records, iou_thresh):
     logger.info("capture rate: %.1f%%" % capture_rate )
     return capture_rate
 
+def GetFalseAlarmRate(predict_records_dict, ground_truth_records_dict, alarm_thresh, iou_thresh):
+    """计算误报率 FalseAlarmRate
+    FalseAlarmRate = M/N
+    N: prediction 中超过alarm_thresh的总数
+    M: 满足以下条件的item总数
+    遍历predict_records
+    0. Query与 top1 结果得分大于 alarm_thresh (条件1，2，3的前提)
+    1. Query::frame_id 在GroundTruth::frame_id中不存在
+    2. (Query::frame_id==GroundTruth::frame_id)
+       && (Query::ROI 与 GroundTruth::ROI的iou 全部小于 iou_thresh)
+    3. (Query::frame_id==GroundTruth::frame_id)
+       && (Query::ROI & GroundTruth::ROI > iou_thresh)
+       && Query::recog_name != GroundTruth::name)
+    """
+    M = 0
+    N = 0
+    for (pred_key, pred_value) in predict_records_dict.items():
+        if pred_value[3]>alarm_thresh: #条件0
+            N += 1
+            pred_frame_id = pred_key[0]
+            pred_roi = pred_key[1:5]
+            pred_name = pred_value[2]
+
+            pred_frame_exist_in_ground_truth = False # reset条件1的标志
+            pred_iou_exist_in_ground_truth = False # reset 条件2的标志
+            pred_name_is_right = False # reset 条件3的标志
+            for (ground_truth_key, ground_truth_value) in ground_truth_records_dict.items():
+                ground_truth_frame_id = ground_truth_key[0]
+
+                if pred_frame_id==ground_truth_frame_id:
+                    pred_frame_exist_in_ground_truth = True #条件1
+                    ground_truth_roi = ground_truth_key[1:5]
+                    iou = GetIOU(pred_roi, ground_truth_roi)
+                    if iou>iou_thresh:
+                        pred_iou_exist_in_ground_truth = True #条件2
+                        pred_name = pred_value[2]
+                        ground_truth_name = ground_truth_value[1]
+                        if pred_name == ground_truth_name: # 条件3
+                            pred_name_is_right = True 
+                            #print ('pred_name = {}, ground_truth_name = {}\n'.format(pred_name, ground_truth_name))
+                            break 
+            if not pred_frame_exist_in_ground_truth: # 条件1
+                M += 1
+                continue
+            if not pred_iou_exist_in_ground_truth: # 条件2
+                M += 1
+                continue
+            if not pred_name_is_right:
+                M += 1
+                continue
+
+    print M
+    print N
+    return 0
+
 def GetRecall(predict_records_dict, ground_truth_records_dict, iou_thresh):
     """计算Recall
     Recall = M/N 
@@ -751,18 +806,21 @@ if __name__ == '__main__':
   ground_truth_records = FileToList(groundtruth_path)
   id_name_map = GetIdNameMap(id_name_map_path)
   
+  predict_records_dict = GetPredictRecordDict(predict_records)
+  ground_truth_records_dict = GetGroundTruthRecordDict(ground_truth_records, id_name_map)
   ## 1. 抓拍率
   capture_rate = GetCaptureRate(predict_records, ground_truth_records, iou_thresh)
   print ('capture_rate = {}\n'.format(capture_rate)) 
 
   ## 2. Recall
-  predict_records_dict = GetPredictRecordDict(predict_records)
   #print predict_records_dict
-  ground_truth_records_dict = GetGroundTruthRecordDict(ground_truth_records, id_name_map)
   #print ground_truth_records_dict
   recall = GetRecall(predict_records_dict, ground_truth_records_dict, iou_thresh)
   print ('recall = {}\n'.format(recall))
 
+  ## 3. 误报率
+  false_alarm_rate = GetFalseAlarmRate(predict_records_dict, ground_truth_records_dict, alarm_similarity_thresh, iou_thresh)
+  print ('false_alarm_rate = {}\n'.format(false_alarm_rate))
 
   ''' 
   #video_list = ["day_1_1","day_1_2","day_1_3","day_1_4","night_1_1","night_1_2","night_1_3","night_1_4"]
