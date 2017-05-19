@@ -118,7 +118,34 @@ def GetFinalScore(recall, false_alarm_rate):
     final_score = (recall*0.7 + (1-false_alarm_rate)*0.3)*100
     return final_score
 
-def GetFalseAlarmRate(predict_records_dict, ground_truth_records_dict, alarm_thresh, iou_thresh):
+def GetLogInfoItem(pred_key, pred_value, ground_truth_key, ground_truth_value):
+    """
+    以以下格式生成log的每一条记录：
+    <frame_id> <pred_name> <ground_truth_name> <iou> <pred_roi> <ground_truth_roi> <similarity_score> <top1_url>
+
+    """
+    pred_frame_id = pred_key[0]
+    pred_name = pred_value[2]
+    ground_truth_name = ground_truth_value[1]
+    pred_roi = pred_key[1:5]
+    ground_truth_roi = ground_truth_key[1:5]
+    iou = GetIOU(pred_roi, ground_truth_roi)
+    similarity_score = pred_value[3]
+    top1_url = ground_truth_value[2]
+    
+    item_info = list()
+    item_info.append(pred_frame_id)
+    item_info.append(pred_name)
+    item_info.append(ground_truth_name)
+    item_info.append(iou)
+    item_info.append(pred_roi)
+    item_info.append(ground_truth_roi)
+    item_info.append(similarity_score)
+    item_info.append(top1_url)
+    info_item_str = '\t'.join(str(x) for x in item_info)
+    return info_item_str
+
+def GetFalseAlarmRate(predict_records_dict, ground_truth_records_dict, alarm_thresh, iou_thresh, black_list_names):
     """计算误报率 FalseAlarmRate
     FalseAlarmRate = M/N
     N: prediction 中超过alarm_thresh的总数
@@ -131,19 +158,24 @@ def GetFalseAlarmRate(predict_records_dict, ground_truth_records_dict, alarm_thr
     3. (Query::frame_id==GroundTruth::frame_id)
        && (Query::ROI & GroundTruth::ROI > iou_thresh)
        && Query::recog_name != GroundTruth::name)
+
+    输出文件：
+    1. ./log/true_alarm.log
+    2. ./log/false_alarm.log
     """
     M = 0
     N = 0
 
     true_alarm_list = list()
     false_alarm_list = list()
+    empty_hit_list = list()
     for (pred_key, pred_value) in predict_records_dict.items():
         similarity_score = pred_value[3]
+        pred_name = pred_value[2]
         if similarity_score>alarm_thresh: #条件0
             N += 1
             pred_frame_id = pred_key[0]
             pred_roi = pred_key[1:5]
-            pred_name = pred_value[2]
 
             pred_frame_exist_in_ground_truth = False # reset条件1的标志
             pred_iou_exist_in_ground_truth = False # reset 条件2的标志
@@ -157,28 +189,24 @@ def GetFalseAlarmRate(predict_records_dict, ground_truth_records_dict, alarm_thr
                     iou = GetIOU(pred_roi, ground_truth_roi)
                     if iou>iou_thresh:
                         pred_iou_exist_in_ground_truth = True #条件2
-                        pred_name = pred_value[2]
                         ground_truth_name = ground_truth_value[1]
                         if pred_name == ground_truth_name: # 条件3
                             pred_name_is_right = True 
-                            top1_url = ground_truth_value[2]
-                            true_alarm_item_info = list()
-                            true_alarm_item_info.append(pred_frame_id)
-                            true_alarm_item_info.append(pred_name)
-                            true_alarm_item_info.append(ground_truth_name)
-                            true_alarm_item_info.append(iou)
-                            true_alarm_item_info.append(pred_roi)
-                            true_alarm_item_info.append(ground_truth_roi)
-                            true_alarm_item_info.append(similarity_score)
-                            true_alarm_item_info.append(top1_url)
-                            true_alarm_item = '\t'.join(str(x) for x in true_alarm_item_info)
+                            true_alarm_item = GetLogInfoItem(pred_key, pred_value, ground_truth_key, ground_truth_value) 
                             true_alarm_list.append(true_alarm_item)
                             break 
+                        else:
+                            false_alarm_item = GetLogInfoItem(pred_key, pred_value, ground_truth_key, ground_truth_value) 
+                            false_alarm_list.append(false_alarm_item)
             if not pred_frame_exist_in_ground_truth: # 条件1
+                empty_hit_item = GetLogInfoItem(pred_key, pred_value, ground_truth_key, ground_truth_value) 
+                empty_hit_list.append(empty_hit_item)
                 M += 1
                 continue
             if not pred_iou_exist_in_ground_truth: # 条件2
                 M += 1
+                empty_hit_item = GetLogInfoItem(pred_key, pred_value, ground_truth_key, ground_truth_value) 
+                empty_hit_list.append(empty_hit_item)
                 continue
             if not pred_name_is_right: # 条件3
                 M += 1
@@ -188,6 +216,17 @@ def GetFalseAlarmRate(predict_records_dict, ground_truth_records_dict, alarm_thr
     for true_alarm_item in true_alarm_list:
         true_alarm_log.write('{}\n'.format(true_alarm_item))
     true_alarm_log.close()
+
+    false_alarm_log = open('./log/false_alarm.log', 'w')
+    for false_alarm_item in false_alarm_list:
+        false_alarm_log.write('{}\n'.format(false_alarm_item))
+    false_alarm_log.close()
+
+    empty_hit_log = open('./log/empty_hit.log', 'w')
+    for empty_hit_item in empty_hit_list:
+        empty_hit_log.write('{}\n'.format(empty_hit_item))
+    empty_hit_log.close()
+
     false_alarm_rate = float(M)/float(N)
     print ('false alarm rate calc: M = {}, N = {}, false_alarm_rate = {}\n'.format(M, N, false_alarm_rate))
     return false_alarm_rate 
@@ -280,6 +319,19 @@ def GetIdNameMap(id_name_map_path):
             id_name_map[black_list_id] = (name, URL)
     return id_name_map
 
+def GetBlackListNames(id_name_map_path):
+    """
+    返回black_list中人的名字列表
+    """
+    black_list_names = set()
+    with open(id_name_map_path) as f:
+        lines = f.readlines()
+        for line in lines:
+            elems = line.split()
+            name = elems[1]
+            black_list_names.add(name)
+    return black_list_names
+
 def GetGroundTruthRecordDict(groundtruth_records, id_name_map):
     """
     将ground_truth_records和id_name_map_records转换为dict格式
@@ -335,7 +387,8 @@ if __name__ == '__main__':
   print ('recall = {}\n'.format(recall))
 
   ## 3. 误报率
-  false_alarm_rate = GetFalseAlarmRate(predict_records_dict, ground_truth_records_dict, alarm_similarity_thresh, iou_thresh)
+  black_list_names = GetBlackListNames(id_name_map_path)
+  false_alarm_rate = GetFalseAlarmRate(predict_records_dict, ground_truth_records_dict, alarm_similarity_thresh, iou_thresh, black_list_names)
   print ('false_alarm_rate = {}\n'.format(false_alarm_rate))
 
   ## 4. 得分
