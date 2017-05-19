@@ -7,6 +7,7 @@ import urllib
 import cStringIO
 import numpy as np
 import re
+import shutil
 
 def GetImageFromURL(URL):
     resp = urllib.urlopen(top1_URL)
@@ -36,6 +37,22 @@ def DrawROI(frame_image, roi, color):
     cv2.rectangle(frame_image, (x,y), (x+w, y+h), color, 2)
     return frame_image
 
+def GetRoiSubImage(frame_image, roi):
+    roi = re.sub('\(',' ',roi)
+    roi = re.sub('\)',' ',roi)
+    roi = re.sub('\,',' ',roi)
+
+    roi = roi.split()
+
+    #print roi
+    x = int(float(roi[0]))
+    y = int(float(roi[1])) 
+    w = int(float(roi[2])) 
+    h = int(float(roi[3])) 
+
+    sub_image = frame_image[y:y+h,x:x+w]
+    return sub_image
+
 if __name__=='__main__':
     print 'main'
     if len(sys.argv) != 4:
@@ -62,14 +79,43 @@ if __name__=='__main__':
             top1_URL = elems[7]
 
             top1_image = GetImageFromURL(top1_URL)
-            #cv2.imshow('test',top1_image)
+            #cv2.imshow('top1',top1_image)
             frame_image = GetImageFromFrameId(frame_img_dir, frame_id) 
             #cv2.imshow(frame_id, frame_image)
 
             draw_image = frame_image.copy()
             DrawROI(draw_image, pred_roi, (255, 0,0))
             DrawROI(draw_image, ground_truth_roi, (0, 255,0))
-            cv2.imshow(frame_id, draw_image)
-            path = str(frame_id) + '.jpg'
-            cv2.imwrite(path, draw_image)
-            cv2.waitKey(0)
+            #cv2.imshow(frame_id, draw_image)
+
+            query_image = GetRoiSubImage(frame_image, pred_roi)
+            #cv2.imshow('query_image', query_image)
+
+            ground_truth_image = GetRoiSubImage(frame_image, ground_truth_roi)
+            #cv2.imshow('ground_truth_image', ground_truth_image)
+
+            sub_dir = '_'.join(x for x in (frame_id, pred_roi))
+            sub_dir = re.sub('\(', '', sub_dir)
+            sub_dir = re.sub('\)', '', sub_dir)
+            sub_dir = re.sub('\ ', '', sub_dir)
+            sub_dir = re.sub('\,', '_', sub_dir)
+            dest_dir = os.path.join(output_dir, sub_dir)
+            if not os.path.exists(sub_dir):
+                os.mkdir(dest_dir)
+
+            det_image_path = os.path.join(dest_dir, frame_id) + '.jpg'
+            cv2.imwrite(det_image_path, draw_image)
+
+            query_image_path = os.path.join(dest_dir, 'query.jpg')
+            cv2.imwrite(query_image_path, query_image)
+
+            ground_truth_path = os.path.join(dest_dir, 'ground_truth.jpg')
+            cv2.imwrite(ground_truth_path, ground_truth_image)
+
+            top1_path = os.path.join(dest_dir, 'top1.jpg')
+            cv2.imwrite(top1_path, top1_image)
+
+            info_path = os.path.join(dest_dir, 'info.txt')
+            with open(info_path, 'w') as f:
+                f.write('iou:{}\n'.format(iou))
+                f.write('similarity_score = {}\n'.format(similarity_score)) 
