@@ -116,6 +116,10 @@ if __name__=='__main__':
             cv2.imwrite(top1_path, top1_image)
 
             info_path = os.path.join(dest_dir, 'info.txt')
+
             with open(info_path, 'w') as f:
-                f.write('iou:{}\n'.format(iou))
+                f.write('iou = {}\n'.format(iou))
                 f.write('similarity_score = {}\n'.format(similarity_score)) 
+                f.write('predict name = {}\n'.format(pred_name))
+                f.write('ground_truth_name = {}\n'.format(ground_truth_name))
+                f.write('top1_URL = {}\n'.format(top1_URL))
