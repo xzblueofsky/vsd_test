@@ -134,8 +134,12 @@ def GetFalseAlarmRate(predict_records_dict, ground_truth_records_dict, alarm_thr
     """
     M = 0
     N = 0
+
+    true_alarm_list = list()
+    false_alarm_list = list()
     for (pred_key, pred_value) in predict_records_dict.items():
-        if pred_value[3]>alarm_thresh: #条件0
+        similarity_score = pred_value[3]
+        if similarity_score>alarm_thresh: #条件0
             N += 1
             pred_frame_id = pred_key[0]
             pred_roi = pred_key[1:5]
@@ -157,7 +161,18 @@ def GetFalseAlarmRate(predict_records_dict, ground_truth_records_dict, alarm_thr
                         ground_truth_name = ground_truth_value[1]
                         if pred_name == ground_truth_name: # 条件3
                             pred_name_is_right = True 
-                            #print ('pred_name = {}, ground_truth_name = {}\n'.format(pred_name, ground_truth_name))
+                            top1_url = ground_truth_value[2]
+                            true_alarm_item_info = list()
+                            true_alarm_item_info.append(pred_frame_id)
+                            true_alarm_item_info.append(pred_name)
+                            true_alarm_item_info.append(ground_truth_name)
+                            true_alarm_item_info.append(iou)
+                            true_alarm_item_info.append(pred_roi)
+                            true_alarm_item_info.append(ground_truth_roi)
+                            true_alarm_item_info.append(similarity_score)
+                            true_alarm_item_info.append(top1_url)
+                            true_alarm_item = '\t'.join(str(x) for x in true_alarm_item_info)
+                            true_alarm_list.append(true_alarm_item)
                             break 
             if not pred_frame_exist_in_ground_truth: # 条件1
                 M += 1
@@ -165,10 +180,14 @@ def GetFalseAlarmRate(predict_records_dict, ground_truth_records_dict, alarm_thr
             if not pred_iou_exist_in_ground_truth: # 条件2
                 M += 1
                 continue
-            if not pred_name_is_right:
+            if not pred_name_is_right: # 条件3
                 M += 1
                 continue
 
+    true_alarm_log = open('./log/true_alarm.log', 'w')
+    for true_alarm_item in true_alarm_list:
+        true_alarm_log.write('{}\n'.format(true_alarm_item))
+    true_alarm_log.close()
     false_alarm_rate = float(M)/float(N)
     print ('false alarm rate calc: M = {}, N = {}, false_alarm_rate = {}\n'.format(M, N, false_alarm_rate))
     return false_alarm_rate 
@@ -210,9 +229,8 @@ def GetRecall(predict_records_dict, ground_truth_records_dict, iou_thresh):
                     #print 'ground_truth_name = {}, pred_name={}'.format(ground_truth_name, pred_name)
                     if pred_name == ground_truth_name: #条件3
                         hit_names.add(pred_name) # 条件4
-
     M = len(hit_names)
-    print hit_names
+    #print hit_names
     recall = float(M)/float(N)
     return recall 
 
