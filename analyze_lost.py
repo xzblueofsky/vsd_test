@@ -12,20 +12,11 @@ import logging.handlers
 import os
 import datetime
 
-_ONE_DAY_IN_SECONDS = 60 * 60 * 24
-IMAGE_WIDTH = 1920
-IMAGE_HEIGHT = 1080
-THRESHOLD = 0.1
-TOPN = 1 #0 means use ALARM_THRESHOLD
-#SECONDS = 50
-ALARM_THRESHOLD = 0.6
- 
 logger = logging.getLogger("MyLogger")
 os.system("mkdir -p ./log")
 log_name = "./log/analyze.log"
 logging.basicConfig(level=logging.DEBUG,
            format='[%(asctime)s %(name)s %(levelname)s] %(message)s',
-           #format='%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s',
            datefmt='%Y-%m-%d %H:%M:%S',
            filename=log_name,
            filemode='w')
@@ -82,41 +73,40 @@ def GetIOU(r1, r2):
 
 def GetCaptureRate(predict_records, ground_truth_records, iou_thresh):
     """ 计算抓拍率 """
-    success_list = []
-    total_list = []
-    for gitem in ground_truth_records:
-       gframeid = gitem[0] #frame_id
-       gid = gitem[1] #people_id
-       groi = gitem[2:6] #bounding box
-       if gid not in total_list:
-          total_list.append(gid)
-       if gid in success_list: #already captured, skip
-          continue
-       flag = 0
-       for titem in predict_records:
-           if flag == 1 :
-              break
-           if int(gitem[0]) == int(titem[0]): #在同一帧中
-              tframeid = titem[0]
-              troi = titem[2:6]
-              iou = GetIOU(groi, troi)
-              if iou > THRESHOLD: # IOU 超过阈值
-                     logger.info("@@@@@@@@@@@@@captured@@@@@@@@@@@@@@")
-                     logger.info("iou: %s" % iou)
-                     logger.info("gframe_id: %s" % gframeid)
-                     logger.info("gid: %s" % gid)
-                     logger.info("groi: %s" % groi)
-                     logger.info("tframe_id: %s" % tframeid )
-                   #  logger.info("tid: %s" % tid)
-                     logger.info("troi: %s" % troi)
-                     success_list.append(gid)
-                     flag = 1
-    #print sorted(success_list)
-    logger.info("success list: %s" % success_list )
-    logger.info("total list: %s" % total_list )
+    success_captured_list = []
+    black_list_id_list = []
+    for ground_truth_record in ground_truth_records:
+        ground_truth_frame_id = int(ground_truth_record[0]) #frame_id
+        gid = ground_truth_record[1] #black_list_id
+        ground_truth_roi = ground_truth_record[2:6] #bounding box
+        if gid not in black_list_id_list:
+            black_list_id_list.append(gid)
+        if gid in success_captured_list: #already captured, skip
+            continue
+        flag = 0
+        for predict_record in predict_records:
+            predict_frame_id = int(predict_record[0])
+            if flag == 1 : #已经抓拍到，跳出
+                break
+            if predict_frame_id == ground_truth_frame_id: #在同一帧中
+                predict_frame_id = predict_record[0]
+                predict_roi = predict_record[2:6]
+                iou = GetIOU(ground_truth_roi, predict_roi)
+                if iou > iou_thresh: # IOU 超过阈值
+                    logger.info("@@@@@@@@@@@@@captured@@@@@@@@@@@@@@")
+                    logger.info("iou: %s" % iou)
+                    logger.info("gframe_id: %s" % ground_truth_frame_id)
+                    logger.info("gid: %s" % gid)
+                    logger.info("groi: %s" % ground_truth_roi)
+                    logger.info("tframe_id: %s" % predict_frame_id )
+                    logger.info("troi: %s" % predict_roi)
+                    success_captured_list.append(gid)
+                    flag = 1
 
-    capture_rate = len(success_list)*1.0/len(total_list)
-    #print "capture_rate: " + str(capture_rate)
+    logger.info("success list: %s" % success_captured_list )
+    logger.info("total list: %s" % black_list_id_list )
+
+    capture_rate = len(success_captured_list)*1.0/len(black_list_id_list)
     logger.info("capture rate: %.1f%%" % capture_rate )
     return capture_rate
 
@@ -198,11 +188,11 @@ def GetRecall(predict_records_dict, ground_truth_records_dict, iou_thresh):
     for (key, value) in ground_truth_records_dict.items():
         unique_ground_truth_names.add(value[1])
 
-    M = len(unique_ground_truth_names)
-    if M==0:
+    N = len(unique_ground_truth_names)
+    if N==0:
         print ('no name in grundtruth, check groundtruth and id_name_map')
     
-    N = 0
+    M = 0
     hit_names = set()
     for (pred_key, pred_value) in predict_records_dict.items():
         pred_frame_id = pred_key[0]
@@ -221,10 +211,9 @@ def GetRecall(predict_records_dict, ground_truth_records_dict, iou_thresh):
                     if pred_name == ground_truth_name: #条件3
                         hit_names.add(pred_name) # 条件4
 
-    N = len(hit_names)
+    M = len(hit_names)
     print hit_names
-    print N
-    recall = float(N)/float(M)
+    recall = float(M)/float(N)
     return recall 
 
 def GetPredictRecordDict(predict_records):
