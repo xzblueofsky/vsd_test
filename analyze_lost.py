@@ -622,6 +622,14 @@ def GetCaptureRate(predict_records, ground_truth_records, iou_thresh):
     logger.info("capture rate: %.1f%%" % capture_rate )
     return capture_rate
 
+def GetFinalScore(recall, false_alarm_rate):
+    """
+    返回得分，依据2017年5月12日 +0800 11:39, yihan@deepgl <yihan@deepgl>的邮件
+    final_score = (recall*0.7 + (1-false_alarm_rate)*0.3)*100
+    """
+    final_score = (recall*0.7 + (1-false_alarm_rate)*0.3)*100
+    return final_score
+
 def GetFalseAlarmRate(predict_records_dict, ground_truth_records_dict, alarm_thresh, iou_thresh):
     """计算误报率 FalseAlarmRate
     FalseAlarmRate = M/N
@@ -673,9 +681,9 @@ def GetFalseAlarmRate(predict_records_dict, ground_truth_records_dict, alarm_thr
                 M += 1
                 continue
 
-    print M
-    print N
-    return 0
+    false_alarm_rate = float(M)/float(N)
+    print ('false alarm rate calc: M = {}, N = {}, false_alarm_rate = {}\n'.format(M, N, false_alarm_rate))
+    return false_alarm_rate 
 
 def GetRecall(predict_records_dict, ground_truth_records_dict, iou_thresh):
     """计算Recall
@@ -753,6 +761,9 @@ def GetPredictRecordDict(predict_records):
     return predict_records_dict
 
 def GetIdNameMap(id_name_map_path):
+    """
+    返回black_list_id到name的映射
+    """
     id_name_map = {}
     with open(id_name_map_path) as f:
         lines = f.readlines()
@@ -821,6 +832,10 @@ if __name__ == '__main__':
   ## 3. 误报率
   false_alarm_rate = GetFalseAlarmRate(predict_records_dict, ground_truth_records_dict, alarm_similarity_thresh, iou_thresh)
   print ('false_alarm_rate = {}\n'.format(false_alarm_rate))
+
+  ## 4. 得分
+  final_score = GetFinalScore(recall, false_alarm_rate)
+  print ('final_score = {}\n'.format(final_score))
 
   ''' 
   #video_list = ["day_1_1","day_1_2","day_1_3","day_1_4","night_1_1","night_1_2","night_1_3","night_1_4"]
