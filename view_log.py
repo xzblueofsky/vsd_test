@@ -8,6 +8,7 @@ import cStringIO
 import numpy as np
 import re
 import shutil
+import errno
 
 def GetImageFromURL(URL):
     resp = urllib.urlopen(top1_URL)
@@ -53,6 +54,31 @@ def GetRoiSubImage(frame_image, roi):
     sub_image = frame_image[y:y+h,x:x+w]
     return sub_image
 
+def mkdir_p(path):
+    try:
+        os.makedirs(path)
+    except OSError as exc:  # Python >2.5
+        if exc.errno == errno.EEXIST and os.path.isdir(path):
+            pass
+        else:
+            raise
+
+def GetDestDir(frame_id, pred_roi, log_path, output_dir):
+
+    log_basename = os.path.basename(log_path)
+    pos = log_basename.find('.')
+    log_basename = log_basename[:pos]
+    dest_dir = os.path.join(output_dir, log_basename)
+
+    sub_dir = '_'.join(x for x in (frame_id, pred_roi))
+    sub_dir = re.sub('\(', '', sub_dir)
+    sub_dir = re.sub('\)', '', sub_dir)
+    sub_dir = re.sub('\ ', '', sub_dir)
+    sub_dir = re.sub('\,', '_', sub_dir)
+    dest_dir = os.path.join(dest_dir, sub_dir)
+    print dest_dir
+    return dest_dir
+
 if __name__=='__main__':
     print 'main'
     if len(sys.argv) != 4:
@@ -94,14 +120,11 @@ if __name__=='__main__':
             ground_truth_image = GetRoiSubImage(frame_image, ground_truth_roi)
             #cv2.imshow('ground_truth_image', ground_truth_image)
 
-            sub_dir = '_'.join(x for x in (frame_id, pred_roi))
-            sub_dir = re.sub('\(', '', sub_dir)
-            sub_dir = re.sub('\)', '', sub_dir)
-            sub_dir = re.sub('\ ', '', sub_dir)
-            sub_dir = re.sub('\,', '_', sub_dir)
-            dest_dir = os.path.join(output_dir, sub_dir)
-            if not os.path.exists(sub_dir):
-                os.mkdir(dest_dir)
+            dest_dir = GetDestDir(frame_id, pred_roi, log_path, output_dir)
+            print dest_dir
+            
+            if not os.path.exists(dest_dir):
+                mkdir_p(dest_dir)
 
             det_image_path = os.path.join(dest_dir, frame_id) + '.jpg'
             cv2.imwrite(det_image_path, draw_image)
