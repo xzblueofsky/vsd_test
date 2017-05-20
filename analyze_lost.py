@@ -169,6 +169,7 @@ def GetFalseAlarmRate(predict_records_dict, ground_truth_records_dict, alarm_thr
     true_alarm_list = set()
     misidentify_list = set()
     empty_hit_list = set()
+    mis_item_cnt = 0
     for (pred_key, pred_value) in predict_records_dict.items():
         pred_id = pred_value[1]
         pred_name = pred_value[2]
@@ -189,21 +190,18 @@ def GetFalseAlarmRate(predict_records_dict, ground_truth_records_dict, alarm_thr
                     pred_frame_exist_in_ground_truth = True #条件1
                     ground_truth_roi = ground_truth_key[1:5]
                     iou = GetIOU(pred_roi, ground_truth_roi)
-                    if iou>iou_thresh:
+                    if iou>=iou_thresh:
                         pred_iou_exist_in_ground_truth = True #条件2
                         ground_truth_name = ground_truth_value[1]
                         if pred_name == ground_truth_name: # 条件3
                             pred_name_is_right = True 
-                            true_alarm_item = GetLogInfoItem(pred_key, pred_value, ground_truth_key, ground_truth_value, top1_URL) 
-                            true_alarm_list.add(true_alarm_item)
-                            break 
                         else:
-                            misidentify_item = GetLogInfoItem(pred_key, pred_value, ground_truth_key, ground_truth_value, top1_URL) 
-                            misidentify_list.add(misidentify_item)
+                            pass
+                        break 
             if not pred_frame_exist_in_ground_truth: # 条件1
+                M += 1
                 empty_hit_item = GetLogInfoItem(pred_key, pred_value, ground_truth_key, ground_truth_value, top1_URL) 
                 empty_hit_list.add(empty_hit_item)
-                M += 1
                 continue
             if not pred_iou_exist_in_ground_truth: # 条件2
                 M += 1
@@ -212,6 +210,12 @@ def GetFalseAlarmRate(predict_records_dict, ground_truth_records_dict, alarm_thr
                 continue
             if not pred_name_is_right: # 条件3
                 M += 1
+                misidentify_item = GetLogInfoItem(pred_key, pred_value, ground_truth_key, ground_truth_value, top1_URL) 
+                misidentify_list.add(misidentify_item)
+                continue
+            if pred_frame_exist_in_ground_truth and pred_iou_exist_in_ground_truth and pred_name_is_right:
+                true_alarm_item = GetLogInfoItem(pred_key, pred_value, ground_truth_key, ground_truth_value, top1_URL) 
+                true_alarm_list.add(true_alarm_item)
                 continue
 
     true_alarm_log = open('./log/true_alarm.log', 'w')
