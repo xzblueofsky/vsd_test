@@ -161,14 +161,15 @@ def GetFalseAlarmRate(predict_records_dict, ground_truth_records_dict, alarm_thr
 
     输出文件：
     1. ./log/true_alarm.log
-    2. ./log/false_alarm.log
+    2. ./log/misidentify.log
+    3. ./log/empty_hit.log
     """
     M = 0
     N = 0
 
-    true_alarm_list = list()
-    false_alarm_list = list()
-    empty_hit_list = list()
+    true_alarm_list = set()
+    misidentify_list = set()
+    empty_hit_list = set()
     for (pred_key, pred_value) in predict_records_dict.items():
         similarity_score = pred_value[3]
         pred_name = pred_value[2]
@@ -193,23 +194,22 @@ def GetFalseAlarmRate(predict_records_dict, ground_truth_records_dict, alarm_thr
                         if pred_name == ground_truth_name: # 条件3
                             pred_name_is_right = True 
                             true_alarm_item = GetLogInfoItem(pred_key, pred_value, ground_truth_key, ground_truth_value) 
-                            true_alarm_list.append(true_alarm_item)
+                            true_alarm_list.add(true_alarm_item)
                             break 
-                        else:
-                            false_alarm_item = GetLogInfoItem(pred_key, pred_value, ground_truth_key, ground_truth_value) 
-                            false_alarm_list.append(false_alarm_item)
             if not pred_frame_exist_in_ground_truth: # 条件1
                 empty_hit_item = GetLogInfoItem(pred_key, pred_value, ground_truth_key, ground_truth_value) 
-                empty_hit_list.append(empty_hit_item)
+                empty_hit_list.add(empty_hit_item)
                 M += 1
                 continue
             if not pred_iou_exist_in_ground_truth: # 条件2
                 M += 1
                 empty_hit_item = GetLogInfoItem(pred_key, pred_value, ground_truth_key, ground_truth_value) 
-                empty_hit_list.append(empty_hit_item)
+                empty_hit_list.add(empty_hit_item)
                 continue
             if not pred_name_is_right: # 条件3
                 M += 1
+                misidentify_item = GetLogInfoItem(pred_key, pred_value, ground_truth_key, ground_truth_value) 
+                misidentify_list.add(misidentify_item)
                 continue
 
     true_alarm_log = open('./log/true_alarm.log', 'w')
@@ -217,10 +217,10 @@ def GetFalseAlarmRate(predict_records_dict, ground_truth_records_dict, alarm_thr
         true_alarm_log.write('{}\n'.format(true_alarm_item))
     true_alarm_log.close()
 
-    false_alarm_log = open('./log/false_alarm.log', 'w')
-    for false_alarm_item in false_alarm_list:
-        false_alarm_log.write('{}\n'.format(false_alarm_item))
-    false_alarm_log.close()
+    misidentify_log = open('./log/misidentify.log', 'w')
+    for misidentify_item in misidentify_list:
+        misidentify_log.write('{}\n'.format(misidentify_item))
+    misidentify_log.close()
 
     empty_hit_log = open('./log/empty_hit.log', 'w')
     for empty_hit_item in empty_hit_list:
@@ -229,6 +229,7 @@ def GetFalseAlarmRate(predict_records_dict, ground_truth_records_dict, alarm_thr
 
     false_alarm_rate = float(M)/float(N)
     print ('false alarm rate calc: M = {}, N = {}, false_alarm_rate = {}\n'.format(M, N, false_alarm_rate))
+    print ('true_alarm_num = {}, misidentify_num = {}, empty_hit_num = {}\n'.format(len(true_alarm_list), len(misidentify_list), len(empty_hit_list))) 
     return false_alarm_rate 
 
 def GetRecall(predict_records_dict, ground_truth_records_dict, iou_thresh):
