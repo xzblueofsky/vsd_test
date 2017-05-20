@@ -33,8 +33,8 @@ if __name__=='__main__':
     ground_truth_records = analyze_lost.FileToList(ground_truth_path)
 
     frame_result_dict = GetFrameRoiMap(ground_truth_records)
-    #ordered_frame_result_dict = collections.OrderedDict(sorted(frame_result_dict.items()))
-    ordered_frame_result_dict = frame_result_dict
+    ordered_frame_result_dict = collections.OrderedDict(sorted(frame_result_dict.items()))
+    #ordered_frame_result_dict = frame_result_dict
 
     for frame_id, tags in ordered_frame_result_dict.items():
         num = int(frame_id)
