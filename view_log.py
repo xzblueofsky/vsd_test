@@ -76,7 +76,6 @@ def GetDestDir(frame_id, pred_roi, log_path, output_dir):
     sub_dir = re.sub('\ ', '', sub_dir)
     sub_dir = re.sub('\,', '_', sub_dir)
     dest_dir = os.path.join(dest_dir, sub_dir)
-    print dest_dir
     return dest_dir
 
 if __name__=='__main__':
