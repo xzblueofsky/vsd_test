@@ -1,0 +1,3 @@
+./view_log.py ./dataset/haiguan/12fps ./log/true_alarm.log ./tmp_result/
+./view_log.py ./dataset/haiguan/12fps ./log/misidentify.log ./tmp_result/
+./view_log.py ./dataset/haiguan/12fps ./log/empty_hit.log ./tmp_result/
