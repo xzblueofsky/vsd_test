@@ -398,20 +398,20 @@ if __name__ == '__main__':
   ground_truth_records_dict = GetGroundTruthRecordDict(ground_truth_records, id_name_map)
   ## 1. 抓拍率
   capture_rate = GetCaptureRate(predict_records, ground_truth_records, iou_thresh)
-  print ('capture_rate = {}\n'.format(capture_rate)) 
+  print ('capture_rate = {}'.format(capture_rate)) 
 
   ## 2. Recall
   #print predict_records_dict
   #print ground_truth_records_dict
   recall = GetRecall(predict_records_dict, ground_truth_records_dict, iou_thresh)
-  print ('recall = {}\n'.format(recall))
+  print ('recall = {}'.format(recall))
 
   ## 3. 误报率
   black_list_names = GetBlackListNames(id_name_map_path)
   id_url_map = GetId_URL_Map(id_url_map_repo)
   false_alarm_rate = GetFalseAlarmRate(predict_records_dict, ground_truth_records_dict, alarm_similarity_thresh, iou_thresh, black_list_names, id_url_map)
-  print ('false_alarm_rate = {}\n'.format(false_alarm_rate))
+  print ('false_alarm_rate = {}'.format(false_alarm_rate))
 
   ## 4. 得分
   final_score = GetFinalScore(recall, false_alarm_rate)
-  print ('final_score = {}\n'.format(final_score))
+  print ('final_score = {}'.format(final_score))
