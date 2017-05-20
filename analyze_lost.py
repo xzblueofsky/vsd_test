@@ -193,7 +193,8 @@ def GetFalseAlarmRate(predict_records_dict, ground_truth_records_dict, alarm_thr
                     if iou>=iou_thresh:
                         pred_iou_exist_in_ground_truth = True #条件2
                         ground_truth_name = ground_truth_value[1]
-                        if pred_name == ground_truth_name: # 条件3
+                        #if pred_name == ground_truth_name: # 条件3
+                        if pred_name == ground_truth_name or pred_name.endswith(ground_truth_name): # 条件3, predict name = 022覃晓飞, ground_truth_name = 覃晓飞 的情况
                             pred_name_is_right = True 
                         else:
                             pass
