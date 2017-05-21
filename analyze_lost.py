@@ -238,45 +238,107 @@ def GetFalseAlarmRate(predict_records_dict, ground_truth_records_dict, alarm_thr
     print ('true_alarm_num = {}, misidentify_num = {}, empty_hit_num = {}'.format(len(true_alarm_list), len(misidentify_list), len(empty_hit_list))) 
     return false_alarm_rate 
 
+def InsertionSort(A):
+    """插入排序"""
+    for j in range(1,len(A)):
+        key = A[j]
+        i = j-1
+        #向前查找插入位置
+        while i>=0 and A[i]>key:
+            A[i+1] = A[i]
+            i = i-1
+        A[i+1] = key
+
+def GetTrackletList(groundtruth_records):
+    tracklets = []
+
+    #group by name
+    name_cluster = {} 
+    for key, value in groundtruth_records.items():
+        name = value[1]
+        if name in name_cluster.keys():
+            name_cluster[name].append((key,value))
+        else:
+            item = [(key,value)]
+            name_cluster[name] = item
+        #print name
+    #print name_cluster
+
+
+    frame_ordered = []
+    #order by frame_id
+    for group_item in name_cluster.values():
+        InsertionSort(group_item)
+        frame_ordered.append(group_item)
+        #print group_item
+
+    #split by unsuccessive
+    for ordered_item in frame_ordered:
+        for k in range(len(ordered_item)-1):
+            #print ordered_item[k][0][0]
+            if len(tracklets)==0:
+                first_tracklet = []
+                first_tracklet.append(ordered_item[k])
+                tracklets.append(first_tracklet)
+                #tracklets.append(ordered_item[k])
+                #print '@@@'*5
+                continue
+            if ordered_item[k+1][0][0] == ordered_item[k][0][0]+1:
+                #print '*'*5
+                tracklets[-1].append(ordered_item[k])
+            else:
+                #print '#'*5
+                new_tracklet = []
+                new_tracklet.append(ordered_item[k])
+                tracklets.append(new_tracklet)
+
+        #print ordered_item
+    return tracklets
+
 def GetRecall(predict_records_dict, ground_truth_records_dict, iou_thresh):
     """计算Recall
     Recall = M/N 
 
-    N: 所有出现在groundtruth中name不同的人的总数
-    M: 满足以下条件的item总数
+    N: 所有出现在groundtruth中name不同的tracklet的总数
+    M: 被击中的tracklet总数,同一个tracklet的只计入一次
+    被击中条件是，tracklet内部任意一帧满足
     1. Query::frame_id == GroundTruth::frame_id
     2. Query::ROI & GroundTruth::ROI > iou_thresh
     3. Query::recog_name == GroundTruth::name
-    4. 同样name的只计入一次
     """
     unique_ground_truth_names = set()
     for (key, value) in ground_truth_records_dict.items():
         unique_ground_truth_names.add(value[1])
 
-    N = len(unique_ground_truth_names)
+    tracklets = GetTrackletList(ground_truth_records_dict)
+    #print tracklets
+
+    N = len(tracklets)
     if N==0:
         print ('no name in grundtruth, check groundtruth and id_name_map')
     
     M = 0
-    hit_names = set()
+    hit_tracklets = list()
     for (pred_key, pred_value) in predict_records_dict.items():
         pred_frame_id = pred_key[0]
         pred_roi = pred_key[1:5]
         pred_name = pred_value[2]
-        if pred_name in hit_names:
-            continue
-        for (ground_truth_key, ground_truth_value) in ground_truth_records_dict.items():
-            ground_truth_frame_id = ground_truth_key[0]
-            if pred_frame_id == ground_truth_frame_id: #条件1
-                ground_truth_roi = ground_truth_key[1:5]
-                iou = GetIOU(pred_roi, ground_truth_roi)
-                if iou>iou_thresh: #条件2
-                    ground_truth_name = ground_truth_value[1]
-                    #print 'ground_truth_name = {}, pred_name={}'.format(ground_truth_name, pred_name)
-                    if pred_name == ground_truth_name: #条件3
-                        hit_names.add(pred_name) # 条件4
-    M = len(hit_names)
+        for tracklet in tracklets:
+            if tracklet in hit_tracklets:
+                continue
+            for (ground_truth_key, ground_truth_value) in tracklet:
+                ground_truth_frame_id = ground_truth_key[0]
+                if pred_frame_id == ground_truth_frame_id: #条件1
+                    ground_truth_roi = ground_truth_key[1:5]
+                    iou = GetIOU(pred_roi, ground_truth_roi)
+                    if iou>iou_thresh: #条件2
+                        ground_truth_name = ground_truth_value[1]
+                        #print 'ground_truth_name = {}, pred_name={}'.format(ground_truth_name, pred_name)
+                        if pred_name == ground_truth_name: #条件3
+                            hit_tracklets.append(tracklet) # 条件4
+    M = len(hit_tracklets)
     #print hit_names
+    print 'Recall: M = {}, N = {}'.format(M, N)
     recall = float(M)/float(N)
     return recall 
 
@@ -405,6 +467,7 @@ if __name__ == '__main__':
   #print ground_truth_records_dict
   recall = GetRecall(predict_records_dict, ground_truth_records_dict, iou_thresh)
   print ('recall = {}'.format(recall))
+  exit(1)
 
   ## 3. 误报率
   black_list_names = GetBlackListNames(id_name_map_path)
