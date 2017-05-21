@@ -2,7 +2,7 @@
 
 ####DG
 #当前VSD
-./analyze_lost.py ~/result.txt ./exp_data/dg/ground_truth/label.txt ./exp_data/dg/id_name_map.txt ./black_list_repo 0.3 0.6
+#./analyze_lost.py ~/result.txt ./exp_data/dg/ground_truth/label.txt ./exp_data/dg/id_name_map.txt ./black_list_repo 0.3 0.6
 
 
 # multi_vote 
@@ -17,7 +17,7 @@
 #===================================================================
 ####haiguan
 # 当前VSD
-#./analyze_lost.py ~/result.txt ./exp_data/haiguan/ground_truth/label.txt ./exp_data/haiguan/id_name_map.txt ./black_list_repo 0.3 0.8
+./analyze_lost.py ~/result.txt ./exp_data/haiguan/ground_truth/label.txt ./exp_data/haiguan/id_name_map.txt ./black_list_repo 0.3 0.8
 
 # multi_vote 
 #./analyze_lost.py ./result.txt ./exp_data/haiguan/ground_truth/label.txt ./exp_data/haiguan/id_name_map.txt ./black_list_repo 0.3 0.6

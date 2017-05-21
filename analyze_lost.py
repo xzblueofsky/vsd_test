@@ -467,7 +467,6 @@ if __name__ == '__main__':
   #print ground_truth_records_dict
   recall = GetRecall(predict_records_dict, ground_truth_records_dict, iou_thresh)
   print ('recall = {}'.format(recall))
-  exit(1)
 
   ## 3. 误报率
   black_list_names = GetBlackListNames(id_name_map_path)
