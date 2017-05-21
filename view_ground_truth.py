@@ -61,4 +61,6 @@ if __name__=='__main__':
         cv2.putText(draw_image, frame_id, (100,100), cv2.FONT_HERSHEY_SIMPLEX, 4,(255,255,255),4)
         #cv2.imwrite(frame_id + '.jpg', draw_image)
         cv2.imshow('ground_truth', draw_image)
-        cv2.waitKey(0)
+        c = cv2.waitKey(0)
+        if c==27:
+            exit(1)
