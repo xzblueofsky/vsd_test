@@ -49,5 +49,6 @@ if __name__=='__main__':
             view_log.DrawROI(draw_image, roi, (255, 0, 0))
 
         cv2.putText(draw_image, frame_id, (100,100), cv2.FONT_HERSHEY_SIMPLEX, 4,(255,255,255),4)
+        #cv2.imwrite(frame_id + '.jpg', draw_image)
         cv2.imshow('ground_truth', draw_image)
         cv2.waitKey(0)

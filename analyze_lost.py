@@ -235,8 +235,7 @@ def GetFalseAlarmRate(predict_records_dict, ground_truth_records_dict, alarm_thr
     empty_hit_log.close()
 
     false_alarm_rate = float(M)/float(N)
-    print ('false alarm rate calc: M = {}, N = {}, false_alarm_rate = {}\n'.format(M, N, false_alarm_rate))
-    print ('true_alarm_num = {}, misidentify_num = {}, empty_hit_num = {}\n'.format(len(true_alarm_list), len(misidentify_list), len(empty_hit_list))) 
+    print ('true_alarm_num = {}, misidentify_num = {}, empty_hit_num = {}'.format(len(true_alarm_list), len(misidentify_list), len(empty_hit_list))) 
     return false_alarm_rate 
 
 def GetRecall(predict_records_dict, ground_truth_records_dict, iou_thresh):
