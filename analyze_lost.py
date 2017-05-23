@@ -174,6 +174,10 @@ def GetFalseAlarmRate(predict_records_dict, ground_truth_records_dict, alarm_thr
         pred_id = pred_value[1]
         pred_name = pred_value[2]
         similarity_score = pred_value[3]
+        if pred_id not in id_url_map.keys():
+            print 'not exist in black_list, pred_id = {}'.format(pred_id)
+            continue
+
         top1_URL = id_url_map[pred_id]
         if similarity_score>alarm_thresh: #条件0
             N += 1
@@ -341,6 +345,7 @@ def GetRecall(predict_records_dict, ground_truth_records_dict, iou_thresh, simil
                                 hit_tracklets.append(tracklet) # 条件4
     M = len(hit_tracklets)
     #print hit_names
+    print 'Recall: M = {}, N = {}'.format(M, N)
     recall = float(M)/float(N)
     return recall 
 
