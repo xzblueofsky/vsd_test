@@ -11,7 +11,7 @@ def GetFrameRoiMap(ground_truth_records):
     frame_result_dict = dict()
     uniq_frame_ids = set()
     for record in ground_truth_records:
-        frame_id = record[0]
+        frame_id = int(record[0])
         if frame_id not in uniq_frame_ids:
             uniq_frame_ids.add(frame_id)
             frame_result_dict[frame_id] = list()

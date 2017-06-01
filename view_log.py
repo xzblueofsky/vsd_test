@@ -11,7 +11,10 @@ import shutil
 import errno
 
 def GetImageFromURL(URL):
-    resp = urllib.urlopen(top1_URL)
+    try:
+        resp = urllib.urlopen(top1_URL)
+    except:
+        print top1_URL
     top1_image = np.asarray(bytearray(resp.read()), dtype="uint8")
     image = cv2.imdecode(top1_image, cv2.IMREAD_COLOR)
     return image

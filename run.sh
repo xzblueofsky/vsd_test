@@ -16,14 +16,11 @@
 
 #===================================================================
 ####haiguan
-# 当前VSD
-./analyze_lost.py ~/result.txt ./exp_data/haiguan/ground_truth/label.txt ./exp_data/haiguan/id_name_map.txt ./black_list_repo 0.3 0.8
+#./analyze_lost.py ~/haiguan_result_19_track3.1.txt ./exp_data/haiguan/ground_truth/label.txt ./exp_data/haiguan/id_name_map.txt ./black_list_repo_167 0.3 0.86
+./analyze_lost.py ~/result.txt ./exp_data/haiguan/ground_truth/label.txt ./exp_data/haiguan/id_name_map.txt ./black_list_repo_162 0.3 0.90
+#./analyze_lost.py ~/haiguan_result_19_track3.1_M0.7.7.1.txt ./exp_data/haiguan/ground_truth/label.txt ./exp_data/haiguan/id_name_map.txt ./black_list_repo_162 0.3 0.83
+#./analyze_lost.py ~/result.txt ./exp_data/haiguan/ground_truth/label.txt ./exp_data/haiguan/id_name_map.txt ./black_list_repo_162 0.3 0.75
+#./analyze_lost.py ~/result.txt ./exp_data/haiguan/ground_truth/label.txt ./exp_data/haiguan/id_name_map.txt ./black_list_repo_167 0.3 0.84
 
-# multi_vote 
-#./analyze_lost.py ./result.txt ./exp_data/haiguan/ground_truth/label.txt ./exp_data/haiguan/id_name_map.txt ./black_list_repo 0.3 0.6
-
-# single_vote 
-#./analyze_lost.py ./result.txt ./exp_data/haiguan/ground_truth/label.txt ./exp_data/haiguan/id_name_map.txt ./black_list_repo 0.3 0.6
-
-# 更新tracking 
-#./analyze_lost.py ./result.txt ./exp_data/haiguan/ground_truth/label.txt ./exp_data/haiguan/id_name_map.txt ./black_list_repo 0.3 0.6
+####dalian1
+#./analyze_lost.py ~/result.txt ./exp_data/dalian1/ground_truth/label.txt ./exp_data/dalian1/id_name_map.txt ./black_list_repo_162 0.0 0.0

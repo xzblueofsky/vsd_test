@@ -1,4 +1,8 @@
 #=======================================================
-./view_log.py ./dataset/haiguan/12fps ./log/true_alarm.log ./tmp_result/rename
-./view_log.py ./dataset/haiguan/12fps ./log/misidentify.log ./tmp_result/rename
-./view_log.py ./dataset/haiguan/12fps ./log/empty_hit.log ./tmp_result/rename
+./view_log.py ./dataset/haiguan ./log/true_alarm.log ./result_0525/rename
+./view_log.py ./dataset/haiguan ./log/misidentify.log ./result_0525/rename
+./view_log.py ./dataset/haiguan ./log/empty_hit.log ./result_0525/rename
+#=======================================================
+#./view_log.py ./dataset/dalian1 ./log/true_alarm.log ./result_0522/rename
+#./view_log.py ./dataset/dalian1 ./log/misidentify.log ./result_0522/rename
+#./view_log.py ./dataset/dalian1 ./log/empty_hit.log ./result_0522/rename
