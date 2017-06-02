@@ -19,6 +19,10 @@ def GetImageFromURL(URL):
     image = cv2.imdecode(top1_image, cv2.IMREAD_COLOR)
     return image
 
+def GetImageFromPath(path):
+    image = cv2.imread(path)
+    return image
+
 def GetImageFromFrameId(frame_img_dir, frame_id):
     fn = frame_id + '.jpg'
     path = os.path.join(frame_img_dir, fn)
@@ -105,8 +109,11 @@ if __name__=='__main__':
             ground_truth_roi = elems[5]
             similarity_score = elems[6]
             top1_URL = elems[7]
+            top1_URL = os.path.abspath(top1_URL)
+            top1_URL = top1_URL.strip()
 
-            top1_image = GetImageFromURL(top1_URL)
+            #top1_image = GetImageFromURL(top1_URL)
+            top1_image = GetImageFromPath(top1_URL)
             #cv2.imshow('top1',top1_image)
             frame_image = GetImageFromFrameId(frame_img_dir, frame_id) 
             #cv2.imshow(frame_id, frame_image)

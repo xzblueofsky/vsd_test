@@ -444,7 +444,7 @@ def GetId_URL_Map(black_list_dir):
             with open(path) as f:
                 lines = f.readlines()
                 for line in lines:
-                    elems = line.split()
+                    elems = line.split('\1')
                     id_url_map[elems[0]] = elems[2]
     return id_url_map
 
