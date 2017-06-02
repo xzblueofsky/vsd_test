@@ -11,5 +11,5 @@
 #./view_ground_truth.py ./dataset/dalian3 ./exp_data/dalian3/ground_truth/label.txt
 
 
-#./view_ground_truth.py ./dataset/xinjiang ./exp_data/xinjiang/ground_truth/bole_12_label.txt
-./view_ground_truth.py ./dataset/xinjiang ./exp_data/xinjiang/ground_truth/fix_label.txt
+./view_ground_truth.py ./dataset/xinjiang ./exp_data/xinjiang/ground_truth/bole_12_label.txt
+#./view_ground_truth.py ./dataset/xinjiang ./exp_data/xinjiang/ground_truth/fix_label.txt
