@@ -181,7 +181,9 @@ def GetFalseAlarmRate(predict_records_dict, ground_truth_records_dict, alarm_thr
             print 'not exist in black_list, pred_id = {}'.format(pred_id)
             continue
 
-        top1_URL = id_url_map[pred_id]
+        #top1_URL = id_url_map[pred_id]
+        ## 适应子勇的文件格式
+        top1_URL = pred_id
         if similarity_score>alarm_thresh: #条件0
             N += 1
             pred_frame_id = pred_key[0]

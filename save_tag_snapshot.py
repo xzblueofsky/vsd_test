@@ -72,7 +72,7 @@ if __name__=='__main__':
             if not os.path.exists(track_id):
                 os.mkdir(track_id)
 
-            roi_path = '{}/{}_{}_{}_{}_{}.jpg'.format(track_id, frame_id, roi[0], roi[1], roi[2], roi[3])
+            roi_path = '{}/{}_{}_{}_{}_{}_{}.jpg'.format(track_id, frame_id, track_id, roi[0], roi[1], roi[2], roi[3])
             roi = GetTaggedROI(frame_image, roi, 1.5)
             cv2.imwrite(roi_path, roi)
             #cv2.imshow('roi', roi)

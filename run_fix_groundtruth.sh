@@ -1,0 +1,1 @@
+./fix_groundtruth.py /home/zhaoxin/workspace/dataset/tag_data/vsd/bole/fix_frame_mismatch_clean/bole_12_label.txt /home/zhaoxin/workspace/dataset/tag_data/vsd/bole/tracklets_for_retag /home/zhaoxin/workspace/dataset/tag_data/vsd/bole/fix_frame_mismatch_clean/clean_tag
