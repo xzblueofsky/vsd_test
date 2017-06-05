@@ -37,7 +37,10 @@ def FileToList(path):
         lines = f.readlines()
         for line in lines:
             line = line.strip()
-            record = line.split(',')
+            if '\1' in line:
+                record = line.split('\1')
+            else:
+                record = line.split(',')
             records.append(record)
     return records 
 
@@ -445,7 +448,10 @@ def GetId_URL_Map(black_list_dir):
                 lines = f.readlines()
                 for line in lines:
                     elems = line.split('\1')
-                    id_url_map[elems[0]] = elems[2]
+                    #原来由tracking 标注工具生成的版本
+                    #id_url_map[elems[0]] = elems[2]
+                    #子勇的版本, 缺失black_list_id, URL充当了原来black_list_id的做用
+                    id_url_map[elems[1]] = elems[0]
     return id_url_map
 
 if __name__ == '__main__':
