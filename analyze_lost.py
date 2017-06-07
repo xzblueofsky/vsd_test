@@ -124,10 +124,11 @@ def GetFinalScore(recall, false_alarm_rate):
 def GetLogInfoItem(pred_key, pred_value, ground_truth_key, ground_truth_value, URL):
     """
     以以下格式生成log的每一条记录：
-    <frame_id> <pred_name> <ground_truth_name> <iou> <pred_roi> <ground_truth_roi> <similarity_score> <top1_url>
+    <frame_id> <pred_name> <ground_truth_name> <iou> <pred_roi> <ground_truth_roi> <similarity_score> <top1_url> <tracking_id>
 
     """
     pred_frame_id = pred_key[0]
+    pred_tracking_id = pred_value[0]
     pred_name = pred_value[2]
     ground_truth_name = ground_truth_value[1]
     pred_roi = pred_key[1:5]
@@ -144,6 +145,7 @@ def GetLogInfoItem(pred_key, pred_value, ground_truth_key, ground_truth_value, U
     item_info.append(ground_truth_roi)
     item_info.append(similarity_score)
     item_info.append(URL)
+    item_info.append(pred_tracking_id)
     info_item_str = '\t'.join(str(x) for x in item_info)
     return info_item_str
 

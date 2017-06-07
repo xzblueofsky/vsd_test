@@ -70,14 +70,13 @@ def mkdir_p(path):
         else:
             raise
 
-def GetDestDir(frame_id, pred_roi, log_path, output_dir):
-
+def GetDestDir(frame_id, tracking_id, pred_roi, log_path, output_dir):
     log_basename = os.path.basename(log_path)
     pos = log_basename.find('.')
     log_basename = log_basename[:pos]
     dest_dir = os.path.join(output_dir, log_basename)
 
-    sub_dir = '_'.join(x for x in (frame_id, pred_roi))
+    sub_dir = '_'.join(x for x in (frame_id,tracking_id, pred_roi))
     sub_dir = re.sub('\(', '', sub_dir)
     sub_dir = re.sub('\)', '', sub_dir)
     sub_dir = re.sub('\ ', '', sub_dir)
@@ -111,6 +110,7 @@ if __name__=='__main__':
             top1_URL = elems[7]
             top1_URL = os.path.abspath(top1_URL)
             top1_URL = top1_URL.strip()
+            tracking_id = elems[8].strip()
 
             #top1_image = GetImageFromURL(top1_URL)
             top1_image = GetImageFromPath(top1_URL)
@@ -129,7 +129,7 @@ if __name__=='__main__':
             ground_truth_image = GetRoiSubImage(frame_image, ground_truth_roi)
             #cv2.imshow('ground_truth_image', ground_truth_image)
 
-            dest_dir = GetDestDir(frame_id, pred_roi, log_path, output_dir)
+            dest_dir = GetDestDir(frame_id, tracking_id, pred_roi, log_path, output_dir)
             print dest_dir
             
             if not os.path.exists(dest_dir):
