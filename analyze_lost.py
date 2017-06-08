@@ -245,9 +245,10 @@ def GetFalseAlarmRate(predict_records_dict, ground_truth_records_dict, alarm_thr
         empty_hit_log.write('{}\n'.format(empty_hit_item))
     empty_hit_log.close()
 
-    false_alarm_rate = float(M)/float(N)
+    eposelon = 1e-10
+    false_alarm_rate = float(M)/(float(N) + eposelon)
     print ('true_alarm_num = {}, misidentify_num = {}, empty_hit_num = {}'.format(len(true_alarm_list), len(misidentify_list), len(empty_hit_list))) 
-    return false_alarm_rate 
+    return (false_alarm_rate, len(true_alarm_list), len(misidentify_list), len(empty_hit_list)) 
 
 def InsertionSort(A):
     """插入排序"""
@@ -488,7 +489,7 @@ if __name__ == '__main__':
   ## 3. 误报率
   black_list_names = GetBlackListNames(id_name_map_path)
   id_url_map = GetId_URL_Map(id_url_map_repo)
-  false_alarm_rate = GetFalseAlarmRate(predict_records_dict, ground_truth_records_dict, alarm_similarity_thresh, iou_thresh, black_list_names, id_url_map)
+  (false_alarm_rate, true_alarm_num, misidentify_num, empty_hit_num) = GetFalseAlarmRate(predict_records_dict, ground_truth_records_dict, alarm_similarity_thresh, iou_thresh, black_list_names, id_url_map)
   print ('false_alarm_rate = {}'.format(false_alarm_rate))
 
   ## 4. 得分
