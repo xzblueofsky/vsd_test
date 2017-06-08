@@ -415,7 +415,7 @@ def GetBlackListNames(id_name_map_path):
             black_list_names.add(name)
     return black_list_names
 
-def GetGroundTruthRecordDict(groundtruth_records, id_name_map):
+def GetGroundTruthRecordDict(ground_truth_records, id_name_map):
     """
     将ground_truth_records和id_name_map_records转换为dict格式
     ground_truth_record: <frame_id> <black_list_id> <x> <y> <width> <height>
