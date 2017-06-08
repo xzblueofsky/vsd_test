@@ -56,7 +56,10 @@ if __name__=='__main__':
         print (i, thresh)
         plt.text(recall_list[i], FAN_list[i], thresh)
 
-    save_fn = datetime.datetime.now().strftime("%I:%M%p_%B_%d_%Y") + '.jpg'
+    plt.xlabel('Recall')
+    plt.ylabel('False Alarm Number')
+
+    save_fn = datetime.datetime.now().strftime("%I_%M%p_%B_%d_%Y") + '.jpg'
     plt.savefig(save_fn)
     print save_fn
     plt.show()

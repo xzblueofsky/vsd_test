@@ -12,5 +12,5 @@
 
 
 #./view_ground_truth.py ./dataset/xinjiang ./exp_data/xinjiang/ground_truth/bole_12_label.txt
-#./view_ground_truth.py ./dataset/xinjiang ./exp_data/xinjiang/ground_truth/fix_label.txt
-./view_ground_truth.py ./dataset/xinjiang /home/zhaoxin/workspace/dataset/tag_data/vsd/bole/fix_frame_mismatch_clean/clean_tag 
+./view_ground_truth.py ./dataset/xinjiang ./exp_data/xinjiang/ground_truth/fix_label.txt
+#./view_ground_truth.py ./dataset/xinjiang /home/zhaoxin/workspace/dataset/tag_data/vsd/bole/fix_frame_mismatch_clean/clean_tag 

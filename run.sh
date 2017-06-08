@@ -18,7 +18,8 @@
 ####haiguan
 #./analyze_lost.py ~/haiguan_result_19_track3.1.txt ./exp_data/haiguan/ground_truth/label.txt ./exp_data/haiguan/id_name_map.txt ./black_list_repo_167 0.3 0.86
 #./analyze_lost.py ~/result.txt ./exp_data/haiguan/ground_truth/label.txt ./exp_data/haiguan/id_name_map.txt ./black_list_repo_162 0.3 0.90
-./analyze_lost.py ./result_0605/2017-06-05-18-00-54/retrieval_result/result.txt ./exp_data/haiguan/ground_truth/label.txt ./exp_data/haiguan/id_name_map.txt ./ziyong_black_list 0.3 0.90
+#./analyze_lost.py ./result_0606/2017-06-06-11-35-35/retrieval_result/result.txt ./exp_data/haiguan/ground_truth/label.txt ./exp_data/haiguan/id_name_map.txt ./ziyong_black_list 0.3 0.90
+./analyze_lost.py ./result_0607/2017-06-07-21-15-53/retrieval_result/result.txt ./exp_data/haiguan/ground_truth/label.txt ./exp_data/haiguan/id_name_map.txt ./ziyong_black_list 0.3 0.90
 
 ####dalian1
 #./analyze_lost.py ~/result.txt ./exp_data/dalian1/ground_truth/label.txt ./exp_data/dalian1/id_name_map.txt ./black_list_repo_162 0.0 0.0
