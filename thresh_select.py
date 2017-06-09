@@ -53,8 +53,8 @@ if __name__=='__main__':
 
     plt.plot(recall_list, FAN_list, 'bo')
     for (i, thresh) in enumerate(thresh_list):
-        print (i, thresh)
         plt.text(recall_list[i], FAN_list[i], thresh)
+        print ('thresh = {}, recall = {}, FAN = {}'.format(thresh, recall_list[i], FAN_list[i]))
 
     plt.xlabel('Recall')
     plt.ylabel('False Alarm Number')
