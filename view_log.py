@@ -120,14 +120,10 @@ if __name__=='__main__':
 
             draw_image = frame_image.copy()
             DrawROI(draw_image, pred_roi, (255, 0,0))
-            DrawROI(draw_image, ground_truth_roi, (0, 255,0))
             #cv2.imshow(frame_id, draw_image)
 
             query_image = GetRoiSubImage(frame_image, pred_roi)
             #cv2.imshow('query_image', query_image)
-
-            ground_truth_image = GetRoiSubImage(frame_image, ground_truth_roi)
-            #cv2.imshow('ground_truth_image', ground_truth_image)
 
             dest_dir = GetDestDir(frame_id, tracking_id, pred_roi, log_path, output_dir)
             print dest_dir
@@ -141,8 +137,15 @@ if __name__=='__main__':
             query_image_path = os.path.join(dest_dir, 'query.jpg')
             cv2.imwrite(query_image_path, query_image)
 
-            ground_truth_path = os.path.join(dest_dir, 'ground_truth.jpg')
-            cv2.imwrite(ground_truth_path, ground_truth_image)
+            if '$' in record:
+                pass
+            else:
+                DrawROI(draw_image, ground_truth_roi, (0, 255,0))
+                ground_truth_image = GetRoiSubImage(frame_image, ground_truth_roi)
+                #cv2.imshow('ground_truth_image', ground_truth_image)
+                ground_truth_path = os.path.join(dest_dir, 'ground_truth.jpg')
+                cv2.imwrite(ground_truth_path, ground_truth_image)
+                pass
 
             top1_path = os.path.join(dest_dir, 'top1.jpg')
             cv2.imwrite(top1_path, top1_image)
