@@ -34,7 +34,7 @@ if __name__=='__main__':
     alarm_similarity_thresh = 0.8
 
     #alarm_similarity_thresh = np.linspace(0,1,101)
-    alarm_similarity_thresh = np.linspace(0.8,1,21)
+    alarm_similarity_thresh = np.linspace(0.8,1,201)
 
     recall_list = []
     FAN_list = []
@@ -43,7 +43,7 @@ if __name__=='__main__':
     for x in alarm_similarity_thresh:
         print x
         thresh_list.append(x)
-        recall = analyze_lost.GetRecall(predict_records_dict, ground_truth_records_dict, iou_thresh, x)
+        recall = analyze_lost.GetRecallByName(predict_records_dict, ground_truth_records_dict, iou_thresh, x)
         recall_list.append(recall)
         print 'recall = {}'.format(recall)
 
@@ -51,7 +51,7 @@ if __name__=='__main__':
         FAN_list.append( misidentify_num + empty_hit_num )
         print 'false_alarm_rate = {}'.format(false_alarm_rate)
 
-    plt.plot(recall_list, FAN_list, 'bo')
+    plt.plot(recall_list, FAN_list, 'bo-')
     for (i, thresh) in enumerate(thresh_list):
         plt.text(recall_list[i], FAN_list[i], thresh)
         print ('thresh = {}, recall = {}, FAN = {}'.format(thresh, recall_list[i], FAN_list[i]))
@@ -63,3 +63,8 @@ if __name__=='__main__':
     plt.savefig(save_fn)
     print save_fn
     plt.show()
+
+    with open('thresh_select.txt', 'w') as f:
+        for (recall, FAN, thresh) in zip(recall_list, FAN_list, thresh_list):
+            print recall, FAN, thresh
+            f.write('{}\t{}\t{}\n'.format(recall, FAN, thresh))
