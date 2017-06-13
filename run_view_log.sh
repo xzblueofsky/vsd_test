@@ -1,7 +1,7 @@
 #=======================================================
-./view_log.py ./dataset/xinjiang_disturb ./log/true_alarm.log ./result_0609/rename
-./view_log.py ./dataset/xinjiang_disturb ./log/misidentify.log ./result_0609/rename
-./view_log.py ./dataset/xinjiang_disturb ./log/empty_hit.log ./result_0609/rename
+./view_log.py ./dataset/xinjiang ./log/true_alarm.log ./result_0610/rename
+./view_log.py ./dataset/xinjiang ./log/misidentify.log ./result_0610/rename
+./view_log.py ./dataset/xinjiang ./log/empty_hit.log ./result_0610/rename
 #=======================================================
 #./view_log.py ./dataset/haiguan ./log/true_alarm.log ./result_0609/rename
 #./view_log.py ./dataset/haiguan ./log/misidentify.log ./result_0609/rename

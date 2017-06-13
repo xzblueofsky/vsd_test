@@ -274,8 +274,6 @@ def GetTrackletList(groundtruth_records):
             item = [(key,value)]
             name_cluster[name] = item
         #print name
-    #print name_cluster
-
 
     frame_ordered = []
     #order by frame_id
@@ -283,6 +281,7 @@ def GetTrackletList(groundtruth_records):
         InsertionSort(group_item)
         frame_ordered.append(group_item)
         #print group_item
+    #print frame_ordered
 
     #split by unsuccessive
     for ordered_item in frame_ordered:
@@ -303,8 +302,6 @@ def GetTrackletList(groundtruth_records):
                 new_tracklet = []
                 new_tracklet.append(ordered_item[k])
                 tracklets.append(new_tracklet)
-
-        #print ordered_item
     return tracklets
 
 def GetRecall(predict_records_dict, ground_truth_records_dict, iou_thresh, similarity_thresh):
@@ -354,6 +351,61 @@ def GetRecall(predict_records_dict, ground_truth_records_dict, iou_thresh, simil
     M = len(hit_tracklets)
     #print hit_names
     print 'Recall: M = {}, N = {}'.format(M, N)
+    recall = float(M)/float(N)
+    return recall 
+
+def GetRecallByName(predict_records_dict, ground_truth_records_dict, iou_thresh, similarity_thresh):
+    """计算Recall
+    Recall = M/N 
+
+    N: 所有出现在groundtruth中不同name的总数
+    M: 被击中name总数,同一个name的只计入一次
+    被击中条件是，属于同一个name的tracklet内部任意一帧满足
+    1. Query::frame_id == GroundTruth::frame_id
+    2. Query::ROI & GroundTruth::ROI > iou_thresh
+    3. Query::recog_name == GroundTruth::name
+    4. Similarity>Thresh
+    """
+    unique_ground_truth_names = set()
+    for (key, value) in ground_truth_records_dict.items():
+        unique_ground_truth_names.add(value[1])
+    print 'unique_ground_truth_names = {}'.format(len(unique_ground_truth_names))
+
+    tracklets = GetTrackletList(ground_truth_records_dict)
+    #print tracklets
+
+    N = len(unique_ground_truth_names)
+    if N==0:
+        print ('no name in grundtruth, check groundtruth and id_name_map')
+    
+    M = 0
+    hit_names = set()
+    hit_tracklets = list()
+    for (pred_key, pred_value) in predict_records_dict.items():
+        pred_frame_id = pred_key[0]
+        pred_roi = pred_key[1:5]
+        pred_name = pred_value[2]
+        if pred_name in hit_names:
+            continue
+        for tracklet in tracklets:
+            if tracklet in hit_tracklets:
+                continue
+            for (ground_truth_key, ground_truth_value) in tracklet:
+                ground_truth_frame_id = ground_truth_key[0]
+                if pred_frame_id == ground_truth_frame_id: #条件1
+                    ground_truth_roi = ground_truth_key[1:5]
+                    iou = GetIOU(pred_roi, ground_truth_roi)
+                    if iou>iou_thresh: #条件2
+                        ground_truth_name = ground_truth_value[1]
+                        #print 'ground_truth_name = {}, pred_name={}'.format(ground_truth_name, pred_name)
+                        if pred_name == ground_truth_name: #条件3
+                            similarity_score = pred_value[3]
+                            if similarity_score> similarity_thresh:
+                                hit_tracklets.append(tracklet) # 条件4
+                                hit_names.add(pred_name)
+    M = len(hit_names)
+    #print hit_names
+    print 'RecallByName: M = {}, N = {}'.format(M, N)
     recall = float(M)/float(N)
     return recall 
 
@@ -483,7 +535,7 @@ if __name__ == '__main__':
   ## 2. Recall
   #print predict_records_dict
   #print ground_truth_records_dict
-  recall = GetRecall(predict_records_dict, ground_truth_records_dict, iou_thresh, alarm_similarity_thresh)
+  recall = GetRecallByName(predict_records_dict, ground_truth_records_dict, iou_thresh, alarm_similarity_thresh)
   print ('recall = {}'.format(recall))
 
   ## 3. 误报率

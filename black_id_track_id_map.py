@@ -39,6 +39,7 @@ if __name__=='__main__':
         52409813 1 13
         52598898 6 9
         '''
+        exit(1)
     tag_file_path = sys.argv[1]
     id_map_path = sys.argv[2]
     output_path = sys.argv[3]
