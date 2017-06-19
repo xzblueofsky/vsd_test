@@ -381,6 +381,7 @@ def GetRecallByName(predict_records_dict, ground_truth_records_dict, iou_thresh,
     M = 0
     hit_names = set()
     hit_tracklets = list()
+    print 'len of pred dict = {}'.format(len(predict_records))
     for (pred_key, pred_value) in predict_records_dict.items():
         pred_frame_id = pred_key[0]
         pred_roi = pred_key[1:5]
@@ -397,14 +398,13 @@ def GetRecallByName(predict_records_dict, ground_truth_records_dict, iou_thresh,
                     iou = GetIOU(pred_roi, ground_truth_roi)
                     if iou>iou_thresh: #条件2
                         ground_truth_name = ground_truth_value[1]
-                        #print 'ground_truth_name = {}, pred_name={}'.format(ground_truth_name, pred_name)
                         if pred_name == ground_truth_name: #条件3
                             similarity_score = pred_value[3]
                             if similarity_score> similarity_thresh:
                                 hit_tracklets.append(tracklet) # 条件4
                                 hit_names.add(pred_name)
     M = len(hit_names)
-    #print hit_names
+    print hit_names
     print 'RecallByName: M = {}, N = {}'.format(M, N)
     recall = float(M)/float(N)
     return recall 
