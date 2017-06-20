@@ -34,7 +34,7 @@ if __name__=='__main__':
     alarm_similarity_thresh = 0.8
 
     #alarm_similarity_thresh = np.linspace(0,1,101)
-    alarm_similarity_thresh = np.linspace(0.8,1,201)
+    alarm_similarity_thresh = np.linspace(0.8,1,21)
 
     recall_list = []
     FAN_list = []
@@ -44,6 +44,7 @@ if __name__=='__main__':
         print x
         thresh_list.append(x)
         recall = analyze_lost.GetRecallByName(predict_records_dict, ground_truth_records_dict, iou_thresh, x)
+        #recall = analyze_lost.GetRecall(predict_records_dict, ground_truth_records_dict, iou_thresh, x)
         recall_list.append(recall)
         print 'recall = {}'.format(recall)
 

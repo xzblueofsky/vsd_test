@@ -389,8 +389,6 @@ def GetRecallByName(predict_records_dict, ground_truth_records_dict, iou_thresh,
         if pred_name in hit_names:
             continue
         for tracklet in tracklets:
-            if tracklet in hit_tracklets:
-                continue
             for (ground_truth_key, ground_truth_value) in tracklet:
                 ground_truth_frame_id = ground_truth_key[0]
                 if pred_frame_id == ground_truth_frame_id: #条件1
