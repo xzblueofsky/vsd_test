@@ -381,7 +381,6 @@ def GetRecallByName(predict_records_dict, ground_truth_records_dict, iou_thresh,
     M = 0
     hit_names = set()
     hit_tracklets = list()
-    print 'len of pred dict = {}'.format(len(predict_records))
     for (pred_key, pred_value) in predict_records_dict.items():
         pred_frame_id = pred_key[0]
         pred_roi = pred_key[1:5]
